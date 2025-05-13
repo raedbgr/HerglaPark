@@ -5,8 +5,9 @@ class MyBindings extends Bindings {
   void dependencies() {
     // Created at start
     Get.put(AuthController());
+    Get.put(HomeController());
 
     // Created when needed
-    Get.lazyPut<HomeController>(() => HomeController());
+    // Get.lazyPut<HomeController>(() => HomeController());
   }
 }

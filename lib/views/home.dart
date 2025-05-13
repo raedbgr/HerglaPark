@@ -11,7 +11,56 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(child: Container()),
+      body: SafeArea(
+        child: Stack(
+          children: [
+            GoogleMap(
+              onMapCreated: homeCtrl.onMapCreated,
+              initialCameraPosition: homeCtrl.initialPosition,
+              zoomControlsEnabled: false,
+              mapToolbarEnabled: false,
+              compassEnabled: false,
+            ),
+            // Leaderboard Button (Top-Left)
+            Positioned(
+              top: 16,
+              left: 16,
+              child: FloatingActionButton(
+                heroTag: "leaderboard",
+                shape: CircleBorder(),
+                backgroundColor: Color(0xfff3edce),
+                onPressed: () {
+                  // leaderboard logic
+                },
+                child: Icon(
+                  Icons.emoji_events,
+                  size: 25,
+                  color: Color(0xff15b0b1),
+                ),
+              ),
+            ),
+
+            // Profile Button (Top-Right)
+            Positioned(
+              top: 16,
+              right: 16,
+              child: FloatingActionButton(
+                heroTag: "profile",
+                shape: CircleBorder(),
+                backgroundColor: Color(0xfff3edce),
+                onPressed: () {
+                  // profile logic
+                },
+                child: Icon(
+                  Icons.person_rounded,
+                  size: 25,
+                  color: Color(0xff15b0b1),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
