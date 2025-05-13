@@ -2,33 +2,90 @@ import '/imports.dart';
 
 class AuthController extends GetxController {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final user = FirebaseAuth.instance.currentUser;
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController = TextEditingController();
+  final TextEditingController confirmPasswordController =
+      TextEditingController();
+  var currentUser =
+      UserModel(
+        id: '',
+        username: '',
+        email: '',
+        avatar: 'assets/player.png',
+        chestsOpened: 0,
+      ).obs;
+  // Add a boolean to track loading state
+  var isLoading = false.obs;
 
-  Future<User?> register(String email, String password) async {
+  // Fetch user data from Firestore
+  Future<void> fetchUserData(String uid) async {
     try {
-      UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+      isLoading(true); // Start loading
+      DocumentSnapshot userDoc = await _firestore.collection('users').doc(uid).get();
+      if (userDoc.exists) {
+        currentUser.value = UserModel.fromJson(userDoc.data() as Map<String, dynamic>);
+        print("User data fetched: ${currentUser.value.username}");
+      } else {
+        print("User document does not exist");
+      }
+    } catch (e) {
+      print("Error fetching user data: $e");
+    } finally {
+      isLoading(false); // Stop loading
+    }
+  }
 
-      // Get the created user
+  Future<User?> signUp(String username, String email, String password) async {
+    try {
+      UserCredential userCredential = await _auth
+          .createUserWithEmailAndPassword(email: email, password: password);
+
       User? user = userCredential.user;
 
       if (user != null) {
         print("User registered: ${user.email}");
+        final Timestamp now = Timestamp.now();
+
+        // Create user document in Firestore
+        await _firestore.collection('users').doc(user.uid).set({
+          'id': user.uid,
+          'username': username,
+          'email': email,
+          'avatar': null,
+          'chestsOpened': 0,
+          'createdAt': now,
+        });
+
+        print("User document created in Firestore");
+        // Clear the text fields
+        usernameController.clear();
         emailController.clear();
         passwordController.clear();
         confirmPasswordController.clear();
-        Get.offAllNamed('/'); // Navigate to home after registration
+        // Fetch the user data after registration
+        await fetchUserData(user.uid);
+        Get.offAllNamed('/home');
       }
 
       return user;
     } on FirebaseAuthException catch (e) {
       print("Register Error: ${e.message}");
-      Get.snackbar("Registration Error", e.message ?? "Something went wrong", snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar(
+        "Registration Error",
+        e.message ?? "Something went wrong",
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return null;
+    } catch (e) {
+      print("Firestore Error: $e");
+      Get.snackbar(
+        "Firestore Error",
+        "Failed to create user document",
+        snackPosition: SnackPosition.BOTTOM,
+      );
       return null;
     }
   }
@@ -43,25 +100,32 @@ class AuthController extends GetxController {
         print("Sign in successful ${userCredential.user!.uid}");
         emailController.clear();
         passwordController.clear();
-        // plantsCtrl.uploadPlantsToFirestore();
-        Get.offAllNamed('/');
+        // Fetch the user data after login
+        await fetchUserData(userCredential.user!.uid);
+        Get.offAllNamed('/home');
       }
     } on FirebaseAuthException catch (e) {
       print("Error: ${e.message}");
-      Get.snackbar("Login Failed", e.message ?? "An error occurred",
-          snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar(
+        "Login Failed",
+        e.message ?? "An error occurred",
+        snackPosition: SnackPosition.BOTTOM,
+      );
     }
   }
 
   Future<void> signOut() async {
     try {
-      await FirebaseAuth.instance.signOut();
+      await _auth.signOut();
       print("User signed out successfully");
       Get.offAllNamed('/login');
     } catch (e) {
       print("Sign out error: $e");
-      Get.snackbar("Error", "Failed to sign out",
-          snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar(
+        "Error",
+        "Failed to sign out",
+        snackPosition: SnackPosition.BOTTOM,
+      );
     }
   }
 }

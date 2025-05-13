@@ -66,7 +66,16 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   GestureDetector(
                     onTap: () {
-                      // Handle login logic here
+                      if (authCtrl.emailController.text.isEmpty ||
+                          authCtrl.passwordController.text.isEmpty) {
+                        Get.snackbar("Error", "Please fill all fields",
+                            snackPosition: SnackPosition.BOTTOM);
+                      } else {
+                        authCtrl.signIn(
+                          authCtrl.emailController.text,
+                          authCtrl.passwordController.text,
+                        );
+                      }
                     },
                     child: Container(
                       padding: const EdgeInsets.all(10),

@@ -7,6 +7,6 @@ class MyBindings extends Bindings {
     Get.put(AuthController());
 
     // Created when needed
-    // Get.lazyPut<MapController>(() => MapController());
+    Get.lazyPut<HomeController>(() => HomeController());
   }
 }

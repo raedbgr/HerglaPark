@@ -65,6 +65,10 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
+    - assets/day_map.json
+    - assets/night_map.json
+    - assets/map_style.json
+    - assets/player.png
     - assets/logo.png
     - assets/google.png
     - assets/apple.png

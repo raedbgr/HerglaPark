@@ -34,7 +34,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   MyTextField(
                     hintText: 'Username',
                     obscureText: false,
-                    controller: authCtrl.passwordController,
+                    controller: authCtrl.usernameController,
                   ),
                   MyTextField(
                     controller: authCtrl.emailController,
@@ -49,11 +49,22 @@ class _RegisterPageState extends State<RegisterPage> {
                   MyTextField(
                     hintText: 'Confirm Password',
                     obscureText: true,
-                    controller: authCtrl.passwordController,
+                    controller: authCtrl.confirmPasswordController,
                   ),
                   GestureDetector(
                     onTap: () {
-                      // Handle login logic here
+                      if (authCtrl.usernameController.text.isEmpty ||
+                          authCtrl.emailController.text.isEmpty ||
+                          authCtrl.passwordController.text.isEmpty ||
+                          authCtrl.confirmPasswordController.text.isEmpty) {
+                        Get.snackbar("Error", "Please fill all fields", snackPosition: SnackPosition.BOTTOM);
+                      } else {
+                        authCtrl.signUp(
+                          authCtrl.usernameController.text,
+                          authCtrl.emailController.text,
+                          authCtrl.passwordController.text,
+                        );
+                      }
                     },
                     child: Container(
                       padding: const EdgeInsets.all(10),
