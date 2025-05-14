@@ -27,7 +27,7 @@ class _HomePageState extends State<HomePage> {
               left: 16,
               child: FloatingActionButton(
                 shape: CircleBorder(),
-                backgroundColor: Color(0xfff3edce),
+                backgroundColor: Colors.white,
                 onPressed: () {
                   // leaderboard logic
                   Get.toNamed('/leaderboard');
@@ -46,7 +46,7 @@ class _HomePageState extends State<HomePage> {
               right: 16,
               child: FloatingActionButton(
                 shape: CircleBorder(),
-                backgroundColor: Color(0xfff3edce),
+                backgroundColor: Colors.white,
                 onPressed: () {
                   Get.toNamed('/profile');
                 },

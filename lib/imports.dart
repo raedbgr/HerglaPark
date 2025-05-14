@@ -34,3 +34,4 @@ export 'controllers/theme_controller.dart';
 
 // components
 export 'components/text_field.dart';
+export 'components/fading_line.dart';
