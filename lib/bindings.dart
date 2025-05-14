@@ -7,5 +7,6 @@ class MyBindings extends Bindings {
     Get.put(AuthController());
     Get.put(HomeController());
     Get.put(ThemeController());
+    //
   }
 }
