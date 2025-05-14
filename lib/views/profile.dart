@@ -75,7 +75,7 @@ class _ProfilePageState extends State<ProfilePage> {
               left: MediaQuery.of(context).size.width / 2 - 55,
               child: CircleAvatar(
                 radius: 55,
-                backgroundImage: AssetImage('assets/player.png'),
+                backgroundImage: AssetImage('assets/images/player.png'),
               ),
             ),
             // back button

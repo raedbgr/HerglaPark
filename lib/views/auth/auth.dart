@@ -26,7 +26,7 @@ class _AuthPageState extends State<AuthPage> {
                     width: 320,
                     decoration: BoxDecoration(
                       image: DecorationImage(
-                        image: AssetImage('assets/logo.png'),
+                        image: AssetImage('assets/images/logo.png'),
                         fit: BoxFit.cover,
                       ),
                     ),
@@ -75,7 +75,7 @@ class _AuthPageState extends State<AuthPage> {
                           spacing: 10,
                           children: [
                             const Image(
-                              image: AssetImage('assets/google.png'),
+                              image: AssetImage('assets/images/google.png'),
                               height: 30,
                               width: 30,
                             ),
@@ -111,7 +111,7 @@ class _AuthPageState extends State<AuthPage> {
                           spacing: 10,
                           children: [
                             const Image(
-                              image: AssetImage('assets/apple.png'),
+                              image: AssetImage('assets/images/apple.png'),
                               height: 30,
                               width: 30,
                             ),

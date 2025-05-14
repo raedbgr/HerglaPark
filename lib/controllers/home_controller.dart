@@ -9,7 +9,7 @@ class HomeController extends GetxController {
 
   void onMapCreated(GoogleMapController controller) async {
     mapController = controller;
-    String style = await rootBundle.loadString('assets/map_style.json');
+    String style = await rootBundle.loadString('assets/map/map_style.json');
     mapController.setMapStyle(style);
   }
 }

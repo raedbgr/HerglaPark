@@ -14,7 +14,7 @@ class AuthController extends GetxController {
         id: '',
         username: '',
         email: '',
-        avatar: 'assets/player.png',
+        avatar: 'assets/images/player.png',
         chestsOpened: 0,
       ).obs;
   // Add a boolean to track loading state
