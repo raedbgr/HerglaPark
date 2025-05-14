@@ -26,11 +26,11 @@ class _HomePageState extends State<HomePage> {
               top: 16,
               left: 16,
               child: FloatingActionButton(
-                heroTag: "leaderboard",
                 shape: CircleBorder(),
                 backgroundColor: Color(0xfff3edce),
                 onPressed: () {
                   // leaderboard logic
+                  Get.toNamed('/leaderboard');
                 },
                 child: Icon(
                   Icons.emoji_events,
@@ -45,11 +45,10 @@ class _HomePageState extends State<HomePage> {
               top: 16,
               right: 16,
               child: FloatingActionButton(
-                heroTag: "profile",
                 shape: CircleBorder(),
                 backgroundColor: Color(0xfff3edce),
                 onPressed: () {
-                  // profile logic
+                  Get.toNamed('/profile');
                 },
                 child: Icon(
                   Icons.person_rounded,

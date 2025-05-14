@@ -6,5 +6,7 @@ class Routes {
     GetPage(name: '/login', page: () => LoginPage()),
     GetPage(name: '/register', page: () => RegisterPage()),
     GetPage(name: '/home', page: () => HomePage()),
+    GetPage(name: '/profile', page: () => ProfilePage(), transition: Transition.rightToLeft),
+    GetPage(name: '/leaderboard', page: () => LeaderboardPage(), transition: Transition.leftToRight),
   ];
 }

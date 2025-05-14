@@ -2,3 +2,4 @@ import 'imports.dart';
 
 AuthController get authCtrl => Get.find<AuthController>();
 HomeController get homeCtrl => Get.find<HomeController>();
+ThemeController get themeCtrl => Get.find<ThemeController>();

@@ -8,6 +8,7 @@ export 'package:flutter/material.dart';
 export 'package:flutter/services.dart';
 export 'package:get/get.dart';
 export 'package:google_maps_flutter/google_maps_flutter.dart';
+export 'package:flutter_native_splash/flutter_native_splash.dart';
 export 'package:firebase_auth/firebase_auth.dart';
 export 'package:firebase_core/firebase_core.dart';
 export 'package:firebase_database/firebase_database.dart';
@@ -23,10 +24,13 @@ export 'views/auth/auth.dart';
 export 'views/auth/login.dart';
 export 'views/auth/register.dart';
 export 'views/home.dart';
+export 'views/profile.dart';
+export 'views/leaderboard.dart';
 
 // controllers
 export 'controllers/auth_controller.dart';
 export 'controllers/home_controller.dart';
+export 'controllers/theme_controller.dart';
 
 // components
 export 'components/text_field.dart';
