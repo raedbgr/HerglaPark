@@ -18,6 +18,7 @@ class ChestMapScreen extends StatefulWidget {
 class _ChestMapScreenState extends State<ChestMapScreen> {
   BitmapDescriptor? _chestIcon; // Store the icon here
   late GoogleMapController mapController;
+  final Set<Polygon> parkBoundary = {}; // For the park boundary
 
   // Firestore reference
   final CollectionReference chestsRef = FirebaseFirestore.instance.collection('chests');
@@ -32,18 +33,17 @@ class _ChestMapScreenState extends State<ChestMapScreen> {
   );
   Future<void> _loadChestIcon() async {
     _chestIcon = await BitmapDescriptor.fromAssetImage(
-      ImageConfiguration(devicePixelRatio: 2.0),
+      ImageConfiguration(
+        devicePixelRatio: 2.0,
+        size: Size(30, 30), // Adjust the size here
+      ),
       'assets/images/chest.png',
     );
   }
-  @override
-  void initState() {
-    super.initState();
-    // Listen for real-time updates from Firestore
-    _loadChestIcon(); // Load the icon once when the screen initializes
 
+  void _setupFirestoreListener() {
     chestsRef.snapshots().listen((snapshot) {
-      setState(() async {
+      setState(() {
         markers.clear();
         for (var doc in snapshot.docs) {
           final data = doc.data() as Map<String, dynamic>;
@@ -54,13 +54,38 @@ class _ChestMapScreenState extends State<ChestMapScreen> {
             Marker(
               markerId: MarkerId(doc.id),
               position: LatLng(lat, lng),
-              icon: _chestIcon!, // Use the pre-loaded icon ✅
-
+              icon: _chestIcon!, // Safe to use after initialization
             ),
           );
         }
       });
     });
+  }
+  void _setupBoudaries() {
+
+    // Define the park boundary polygon
+    parkBoundary.add(
+      Polygon(
+        polygonId: PolygonId('park_boundary'),
+        points: parkPolygonCoords.map((latLng) => LatLng(latLng.latitude, latLng.longitude)).toList(),
+        strokeWidth: 2, // Thickness of the border line
+        strokeColor: Colors.green, // Green color for the boundary
+        fillColor: Colors.transparent, // Transparent fill (only outline)
+      ),
+    );
+  }
+
+
+  Future<void> _initialize() async {
+    await _loadChestIcon(); // Wait for the icon to load
+    _setupFirestoreListener(); // Then set up the listener
+    _setupBoudaries();
+  }
+  @override
+  void initState() {
+    super.initState();
+    // Listen for real-time updates from Firestore
+    _initialize();
   }
 
   @override
@@ -72,19 +97,16 @@ class _ChestMapScreenState extends State<ChestMapScreen> {
       body: Stack(
         children: [
           GoogleMap(
-            onMapCreated: (controller) {
-              mapController = controller;
-            },
+            onMapCreated: (controller) => mapController = controller,
             initialCameraPosition: initialCameraPosition,
+            polygons: parkBoundary, // Add the park boundary here
             markers: markers,
           ),
           Positioned(
             bottom: 16,
             right: 16,
             child: FloatingActionButton(
-              onPressed: () {
-                generateRandomChests(5);
-              },
+              onPressed: _chestIcon != null ? () => generateRandomChests(5) : null,
               child: Icon(Icons.add),
             ),
           ),
