@@ -15,7 +15,7 @@ class MyApp extends StatelessWidget {
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
       getPages: Routes.routes,
-      initialRoute: '/home',//chestHome
+      initialRoute: '/auth',
       initialBinding: MyBindings(),
     );
   }

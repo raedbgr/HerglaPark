@@ -41,3 +41,11 @@ flutter:
   assets:
     - assets/images/
     - assets/map/
+    - assets/fonts/
+  
+  fonts:
+    - family: Serif
+      fonts:
+        - asset: assets/fonts/BlackStage-Regular.ttf
+        - asset: assets/fonts/fredonia.ttf
+        - asset: assets/fonts/Qerginas-Frenchstyle-Serif.otf

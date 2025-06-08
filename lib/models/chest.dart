@@ -1,10 +1,4 @@
-import 'dart:math';
-
-import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:uuid/uuid.dart'; // For generating UUIDs
-import 'package:cloud_firestore/cloud_firestore.dart';
-
-import '../constants.dart'; // For Firestore integration
+import '/imports.dart';
 
 class Chest {
   String id;
@@ -39,11 +33,6 @@ class Location {
   Location({required this.lat, required this.lng});
 
   Map<String, dynamic> toJson() {
-    return {
-      'lat': lat,
-      'lng': lng,
-    };
+    return {'lat': lat, 'lng': lng};
   }
 }
-
-

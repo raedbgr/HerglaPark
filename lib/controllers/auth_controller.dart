@@ -118,7 +118,7 @@ class AuthController extends GetxController {
     try {
       await _auth.signOut();
       print("User signed out successfully");
-      Get.offAllNamed('/login');
+      Get.offAllNamed('/auth');
     } catch (e) {
       print("Sign out error: $e");
       Get.snackbar(

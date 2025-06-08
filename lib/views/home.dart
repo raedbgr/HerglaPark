@@ -9,18 +9,15 @@ import 'quiz.dart';
 import '../constants.dart';
 import '../models/chest.dart';
 
-
-
-
 class ChestMapScreen extends StatefulWidget {
   @override
   _ChestMapScreenState createState() => _ChestMapScreenState();
 }
 
 class _ChestMapScreenState extends State<ChestMapScreen> {
-  BitmapDescriptor? _chestIcon; // Store the icon here
-  final Set<Polygon> parkBoundary = {}; // For the park boundary
-  int chestSize = 15; // Default size for the chest markers
+  BitmapDescriptor? _chestIcon;
+  final Set<Polygon> parkBoundary = {};
+  int chestSize = 15;
 
   // Firestore reference
   final CollectionReference chestsRef = FirebaseFirestore.instance.collection('chests');
