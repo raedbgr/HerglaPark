@@ -6,7 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
-import '../models/bonus.dart';
+import '../../models/bonus.dart';
 
 class QuizChallenge {
   final String id;

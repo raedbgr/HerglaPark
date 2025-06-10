@@ -32,20 +32,20 @@ class _MyTextFieldState extends State<MyTextField> {
       decoration: InputDecoration(
         hintText: widget.hintText,
         filled: true,
-        fillColor: const Color(0xfffdfefe),
-        enabledBorder: const OutlineInputBorder(
-          borderSide: BorderSide(color: Color(0xff15b0b1)),
+        fillColor: themeCtrl.backgroundColor,
+        enabledBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: themeCtrl.primaryColor),
           borderRadius: BorderRadius.all(Radius.circular(10)),
         ),
-        focusedBorder: const OutlineInputBorder(
-          borderSide: BorderSide(color: Color(0xff15b0b1)),
+        focusedBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: themeCtrl.primaryColor),
           borderRadius: BorderRadius.all(Radius.circular(10)),
         ),
         suffixIcon:
             widget.obscureText
                 ? IconButton(
                   icon: Icon(
-                    color: const Color(0xff15b0b1),
+                    color: themeCtrl.primaryColor,
                     _isObscured
                         ? Icons.visibility_rounded
                         : Icons.visibility_off_rounded,

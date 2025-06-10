@@ -1,13 +1,4 @@
 import '/imports.dart';
-import 'dart:math';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:uuid/uuid.dart';
-import 'quiz.dart';
-
-import '../constants.dart';
-import '../models/chest.dart';
 
 class ChestMapScreen extends StatefulWidget {
   @override
@@ -70,7 +61,7 @@ class _ChestMapScreenState extends State<ChestMapScreen> {
         polygonId: PolygonId('park_boundary'),
         points: parkPolygonCoords.map((latLng) => LatLng(latLng.latitude, latLng.longitude)).toList(),
         strokeWidth: 2, // Thickness of the border line
-        strokeColor: Colors.green, // Green color for the boundary
+        strokeColor: themeCtrl.primaryColor, // Green color for the boundary
         fillColor: Colors.transparent, // Transparent fill (only outline)
       ),
     );
@@ -92,7 +83,6 @@ class _ChestMapScreenState extends State<ChestMapScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-     
       body: Stack(
         children: [
           GoogleMap(
@@ -111,7 +101,7 @@ class _ChestMapScreenState extends State<ChestMapScreen> {
               child: FloatingActionButton(
                 heroTag: "leaderboardBtn",
                 shape: CircleBorder(),
-                backgroundColor: Colors.white,
+                backgroundColor: themeCtrl.backgroundColor,
                 onPressed: () {
                   // leaderboard logic
                   Get.toNamed('/leaderboard');
@@ -119,7 +109,7 @@ class _ChestMapScreenState extends State<ChestMapScreen> {
                 child: Icon(
                   Icons.emoji_events,
                   size: 25,
-                  color: Color(0xff15b0b1),
+                  color: themeCtrl.primaryColor,
                 ),
               ),
             ),
@@ -131,14 +121,14 @@ class _ChestMapScreenState extends State<ChestMapScreen> {
               child: FloatingActionButton(
                 heroTag: "profileBtn",
                 shape: CircleBorder(),
-                backgroundColor: Colors.white,
+                backgroundColor: themeCtrl.backgroundColor,
                 onPressed: () {
                   Get.toNamed('/profile');
                 },
                 child: Icon(
                   Icons.person_rounded,
                   size: 25,
-                  color: Color(0xff15b0b1),
+                  color: themeCtrl.primaryColor,
                 ),
               ),
             ),

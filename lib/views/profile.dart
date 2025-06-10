@@ -117,7 +117,7 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: themeCtrl.primaryColor,
+      backgroundColor: themeCtrl.backgroundColor,
       body: SafeArea(
         child: Stack(
           children: [
@@ -135,7 +135,7 @@ class _ProfilePageState extends State<ProfilePage> {
               width: double.infinity,
               margin: EdgeInsets.only(top: 150, left: 10, right: 10),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: themeCtrl.backgroundColor,
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(30),
                   topRight: Radius.circular(30),
@@ -166,7 +166,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               Icon(
                                 Icons.star_border_rounded,
                                 size: 30,
-                                color: Colors.white,
+                                color: themeCtrl.secondaryColor,
                               ),
                               Text(
                                 'POINTS',
@@ -194,7 +194,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               Icon(
                                 Icons.view_in_ar_rounded,
                                 size: 30,
-                                color: Colors.white,
+                                color: themeCtrl.secondaryColor,
                               ),
                               Text(
                                 'CHESTS OPENED',
@@ -222,7 +222,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               Icon(
                                 Icons.leaderboard_rounded,
                                 size: 30,
-                                color: Colors.white,
+                                color: themeCtrl.secondaryColor,
                               ),
                               Text(
                                 'RANK',
@@ -307,7 +307,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                           },
                                           child: Container(
                                             decoration: BoxDecoration(
-                                              color: Colors.white,
+                                              color: themeCtrl.backgroundColor,
                                               borderRadius:
                                                   BorderRadius.circular(20),
                                               border: Border.all(
@@ -375,7 +375,7 @@ class _ProfilePageState extends State<ProfilePage> {
               child: FloatingActionButton(
                 heroTag: "backBtn",
                 shape: CircleBorder(),
-                backgroundColor: Colors.white,
+                backgroundColor: themeCtrl.backgroundColor,
                 onPressed: () {
                   Get.back();
                 },
@@ -393,7 +393,7 @@ class _ProfilePageState extends State<ProfilePage> {
               child: FloatingActionButton(
                 heroTag: "logoutBtn",
                 shape: CircleBorder(),
-                backgroundColor: Colors.white,
+                backgroundColor: themeCtrl.backgroundColor,
                 onPressed: () {
                   authCtrl.signOut();
                 },
@@ -438,7 +438,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   Container(
                     padding: EdgeInsets.all(15),
                     decoration: BoxDecoration(
-                      color: Colors.grey[100],
+                      color: themeCtrl.backgroundColor,
                       borderRadius: BorderRadius.circular(15),
                     ),
                     child: Column(
@@ -470,7 +470,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   SizedBox(height: 15),
                   Text(
                     'Expires on: ${_formatDate(bonus.expiresAt)}',
-                    style: TextStyle(fontSize: 14, color: Colors.red),
+                    style: TextStyle(fontSize: 14, color: themeCtrl.secondaryColor),
                   ),
                   SizedBox(height: 20),
                   ElevatedButton(
@@ -489,6 +489,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
+                        color: themeCtrl.textColor,
                       ),
                     ),
                   ),

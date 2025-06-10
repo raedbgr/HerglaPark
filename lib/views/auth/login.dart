@@ -11,7 +11,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xfff3edce),
+      backgroundColor: themeCtrl.backgroundColor,
       body: SafeArea(
         child: Center(
           child: Padding(
@@ -51,10 +51,10 @@ class _LoginPageState extends State<LoginPage> {
                             onTap: () {
                               Get.toNamed('/forgot-password');
                             },
-                            child: const Text(
+                            child: Text(
                               'Forgot Password?',
                               style: TextStyle(
-                                color: Color(0xff15b0b1),
+                                color: themeCtrl.secondaryColor,
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -82,17 +82,17 @@ class _LoginPageState extends State<LoginPage> {
                       height: 50,
                       width: double.infinity,
                       decoration: BoxDecoration(
-                        color: const Color(0xff15b0b1),
+                        color: themeCtrl.primaryColor,
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                          color: const Color(0xFFb3c3c0),
+                          color: themeCtrl.primaryColor,
                         ),
                       ),
-                      child: const Text(
+                      child: Text(
                         'Sign In',
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: Color(0xfffdfefe),
+                          color: themeCtrl.textColor,
                           fontSize: 18,
                         ),
                       ),
@@ -109,9 +109,9 @@ class _LoginPageState extends State<LoginPage> {
                         onTap: () {
                           Get.toNamed('/register');
                         },
-                        child: const Text('Sign Up',
+                        child: Text('Sign Up',
                             style: TextStyle(
-                              color: Color(0xff15b0b1),
+                              color: themeCtrl.secondaryColor,
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             )),

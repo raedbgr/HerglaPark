@@ -11,7 +11,7 @@ class _AuthPageState extends State<AuthPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xfff3edce),
+      backgroundColor: themeCtrl.backgroundColor,
       body: SafeArea(
         child: Center(
           child: Padding(
@@ -40,16 +40,16 @@ class _AuthPageState extends State<AuthPage> {
                       height: 60,
                       width: double.infinity,
                       decoration: BoxDecoration(
-                        color: const Color(0xff15b0b1),
+                        color: themeCtrl.primaryColor,
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: const Color(0xFFb3c3c0)),
+                        border: Border.all(color: themeCtrl.primaryColor),
                       ),
                       child: Center(
-                        child: const Text(
+                        child: Text(
                           'Continue with Email',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: Color(0xfffdfefe),
+                            color: themeCtrl.textColor,
                             fontSize: 18,
                           ),
                         ),
@@ -65,9 +65,9 @@ class _AuthPageState extends State<AuthPage> {
                       height: 60,
                       width: double.infinity,
                       decoration: BoxDecoration(
-                        color: const Color(0xfffdfefe),
+                        color: themeCtrl.backgroundColor,
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: const Color(0xFFb3c3c0)),
+                        border: Border.all(color: themeCtrl.primaryColor),
                       ),
                       child: Center(
                         child: Row(
@@ -79,11 +79,11 @@ class _AuthPageState extends State<AuthPage> {
                               height: 30,
                               width: 30,
                             ),
-                            const Text(
+                            Text(
                               'Continue with Google',
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                color: Color(0xff15b0b1),
+                                color: themeCtrl.primaryColor,
                                 fontSize: 18,
                               ),
                             ),
@@ -101,9 +101,9 @@ class _AuthPageState extends State<AuthPage> {
                       height: 60,
                       width: double.infinity,
                       decoration: BoxDecoration(
-                        color: const Color(0xfffdfefe),
+                        color: themeCtrl.backgroundColor,
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: const Color(0xFFb3c3c0)),
+                        border: Border.all(color: themeCtrl.primaryColor),
                       ),
                       child: Center(
                         child: Row(
@@ -115,11 +115,11 @@ class _AuthPageState extends State<AuthPage> {
                               height: 30,
                               width: 30,
                             ),
-                            const Text(
+                            Text(
                               'Continue with Apple',
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                color: Color(0xff15b0b1),
+                                color: themeCtrl.primaryColor,
                                 fontSize: 18,
                               ),
                             ),

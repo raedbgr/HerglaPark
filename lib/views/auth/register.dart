@@ -11,7 +11,7 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xfff3edce),
+      backgroundColor: themeCtrl.backgroundColor,
       body: SafeArea(
         child: Center(
           child: Padding(
@@ -71,17 +71,17 @@ class _RegisterPageState extends State<RegisterPage> {
                       height: 50,
                       width: double.infinity,
                       decoration: BoxDecoration(
-                        color: const Color(0xff15b0b1),
+                        color: themeCtrl.primaryColor,
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                          color: const Color(0xFFb3c3c0),
+                          color: themeCtrl.primaryColor,
                         ),
                       ),
-                      child: const Text(
+                      child: Text(
                         'Sign Up',
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: Color(0xfffdfefe),
+                          color: themeCtrl.textColor,
                           fontSize: 18,
                         ),
                       ),
@@ -98,9 +98,9 @@ class _RegisterPageState extends State<RegisterPage> {
                         onTap: () {
                           Get.toNamed('/login');
                         },
-                        child: const Text('Sign Up',
+                        child: Text('Sign Up',
                             style: TextStyle(
-                              color: Color(0xff15b0b1),
+                              color: themeCtrl.secondaryColor,
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             )),
