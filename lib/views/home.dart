@@ -169,7 +169,7 @@ class _ChestMapScreenState extends State<ChestMapScreen> {
         'expiresAt': Timestamp.fromDate(DateTime.now().add(Duration(days: 7))),
       });
 
-      print("## Chest ${uuid} generated and saved successfully!");
+      print("## Chest $uuid generated and saved successfully!");
 
       // Add the marker to the map
       setState(() {

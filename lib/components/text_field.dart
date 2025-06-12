@@ -5,7 +5,7 @@ class MyTextField extends StatefulWidget {
   final bool obscureText;
   final TextEditingController controller;
 
-  MyTextField({
+  const MyTextField({super.key,
     required this.hintText,
     required this.obscureText,
     required this.controller,

@@ -39,9 +39,10 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/images/
     - assets/map/
     - assets/fonts/
+    - assets/images/
+    - assets/images/whack_a_mole/
   
   fonts:
     - family: Serif

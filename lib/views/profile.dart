@@ -470,7 +470,10 @@ class _ProfilePageState extends State<ProfilePage> {
                   SizedBox(height: 15),
                   Text(
                     'Expires on: ${_formatDate(bonus.expiresAt)}',
-                    style: TextStyle(fontSize: 14, color: themeCtrl.secondaryColor),
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: themeCtrl.secondaryColor,
+                    ),
                   ),
                   SizedBox(height: 20),
                   ElevatedButton(

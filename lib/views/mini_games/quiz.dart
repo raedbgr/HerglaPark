@@ -1,12 +1,4 @@
-import 'dart:async';
-import 'dart:math';
-
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
-import 'package:uuid/uuid.dart';
-
-import '../../models/bonus.dart';
+import '/imports.dart';
 
 class QuizChallenge {
   final String id;
@@ -32,7 +24,7 @@ class QuizScreen extends StatefulWidget {
   final Function onSuccess;
   final Function onFailure;
 
-  QuizScreen({
+  const QuizScreen({super.key,
     required this.chestId,
     required this.onSuccess,
     required this.onFailure,
