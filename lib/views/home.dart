@@ -128,6 +128,10 @@ class _HomePageState extends State<HomePage> {
             compassEnabled: false,
             myLocationEnabled: true,
             myLocationButtonEnabled: false,
+            scrollGesturesEnabled: false, // Disable scrolling gestures
+            rotateGesturesEnabled: false, // Optionally disable rotation
+            tiltGesturesEnabled: false, // Optionally disable tilt
+            zoomGesturesEnabled: true, // Optionally disable zoom gestures
           ),
           // Leaderboard Button (Top-Left)
           Positioned(
@@ -169,27 +173,27 @@ class _HomePageState extends State<HomePage> {
           ),
 
           // My Location Button (Bottom-Left)
-          Positioned(
-            bottom: 16,
-            left: 16,
-            child: FloatingActionButton(
-              heroTag: "myLocationBtn",
-              shape: CircleBorder(),
-              backgroundColor: themeCtrl.backgroundColor,
-              onPressed: () {
-                if (homeCtrl.currentPosition.value != null) {
-                  homeCtrl.animateToUserLocation(
-                    homeCtrl.currentPosition.value!,
-                  );
-                }
-              },
-              child: Icon(
-                Icons.my_location,
-                size: 25,
-                color: themeCtrl.primaryColor,
-              ),
-            ),
-          ),
+          // Positioned(
+          //   bottom: 16,
+          //   left: 16,
+          //   child: FloatingActionButton(
+          //     heroTag: "myLocationBtn",
+          //     shape: CircleBorder(),
+          //     backgroundColor: themeCtrl.backgroundColor,
+          //     onPressed: () {
+          //       if (homeCtrl.currentPosition.value != null) {
+          //         homeCtrl.animateToUserLocation(
+          //           homeCtrl.currentPosition.value!,
+          //         );
+          //       }
+          //     },
+          //     child: Icon(
+          //       Icons.my_location,
+          //       size: 25,
+          //       color: themeCtrl.primaryColor,
+          //     ),
+          //   ),
+          // ),
 
           // Add Chest Button (Bottom-Right)
           Positioned(
