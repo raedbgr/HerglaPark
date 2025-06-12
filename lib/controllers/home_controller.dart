@@ -2,12 +2,12 @@ import '/imports.dart';
 
 class HomeController extends GetxController {
   late GoogleMapController mapController;
-  
+
   // Observable variables for user's current location
   final Rx<Position?> currentPosition = Rx<Position?>(null);
   final RxBool isLocationServiceEnabled = false.obs;
-  final RxDouble proximityThreshold = 15.0.obs; // 15 meters radius
-  
+  final RxDouble proximityThreshold = 12.0.obs;
+
   // Remove these variables as we'll use the built-in location indicator
   // final Rx<Marker?> userMarker = Rx<Marker?>(null);
   // BitmapDescriptor? userLocationIcon;
@@ -24,20 +24,21 @@ class HomeController extends GetxController {
     // Remove this line as we don't need to load a custom icon anymore
     // _loadUserLocationIcon();
   }
-  
+
   @override
   void onClose() {
     // Cancel any active location subscriptions
     stopLocationUpdates();
     super.onClose();
   }
-  
+
   // Initialize location tracking
   Future<void> _initLocationTracking() async {
     try {
       // Check if location services are enabled
-      isLocationServiceEnabled.value = await Geolocator.isLocationServiceEnabled();
-      
+      isLocationServiceEnabled.value =
+          await Geolocator.isLocationServiceEnabled();
+
       if (!isLocationServiceEnabled.value) {
         Get.snackbar(
           'Location Services Disabled',
@@ -47,10 +48,10 @@ class HomeController extends GetxController {
         );
         return;
       }
-      
+
       // Request location permission
       LocationPermission permission = await Geolocator.checkPermission();
-      
+
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
@@ -72,7 +73,7 @@ class HomeController extends GetxController {
         );
         return;
       }
-      
+
       // Start listening to location updates
       startLocationUpdates();
     } catch (e) {
@@ -81,7 +82,7 @@ class HomeController extends GetxController {
   }
 
   // Remove the _loadUserLocationIcon method as we don't need it anymore
-  
+
   // Start location updates
   void startLocationUpdates() {
     Geolocator.getPositionStream(
@@ -96,12 +97,12 @@ class HomeController extends GetxController {
       animateToUserLocation(position);
     });
   }
-  
+
   // Stop location updates
   void stopLocationUpdates() {
     // This method would cancel the stream subscription if needed
   }
-  
+
   // Remove the _updateUserMarker method as we don't need it anymore
 
   // Animate camera to user location
@@ -117,30 +118,32 @@ class HomeController extends GetxController {
     mapController = controller;
     String style = await rootBundle.loadString('assets/map/map_style.json');
     mapController.setMapStyle(style);
-    
+
     // If we already have a position, move camera to it
     if (currentPosition.value != null) {
       animateToUserLocation(currentPosition.value!);
     }
   }
-  
+
   // Calculate distance between two points in meters
   double calculateDistance(LatLng point1, LatLng point2) {
     return Geolocator.distanceBetween(
-      point1.latitude, point1.longitude,
-      point2.latitude, point2.longitude
+      point1.latitude,
+      point1.longitude,
+      point2.latitude,
+      point2.longitude,
     );
   }
-  
+
   // Check if a chest is within proximity threshold
   bool isChestInProximity(LatLng chestLocation) {
     if (currentPosition.value == null) return false;
-    
+
     double distance = calculateDistance(
       LatLng(currentPosition.value!.latitude, currentPosition.value!.longitude),
-      chestLocation
+      chestLocation,
     );
-    
+
     return distance <= proximityThreshold.value;
   }
 }
