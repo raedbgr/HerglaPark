@@ -1,4 +1,4 @@
-import '/imports.dart';
+import 'imports.dart';
 
 class Middleware extends StatelessWidget {
   const Middleware({super.key});
