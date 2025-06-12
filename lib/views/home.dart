@@ -1,11 +1,11 @@
 import '/imports.dart';
 
-class ChestMapScreen extends StatefulWidget {
+class HomePage extends StatefulWidget {
   @override
-  _ChestMapScreenState createState() => _ChestMapScreenState();
+  _HomePageState createState() => _HomePageState();
 }
 
-class _ChestMapScreenState extends State<ChestMapScreen> {
+class _HomePageState extends State<HomePage> {
   BitmapDescriptor? _chestIcon;
   final Set<Polygon> parkBoundary = {};
   int chestSize = 15;

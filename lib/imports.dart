@@ -1,5 +1,6 @@
 // misc
 export 'routes.dart';
+export 'middleware.dart';
 export 'bindings.dart';
 export 'constants.dart';
 

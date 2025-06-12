@@ -2,9 +2,10 @@ import '/imports.dart';
 
 class HomeController extends GetxController {
   late GoogleMapController mapController;
+
   final CameraPosition initialPosition = CameraPosition(
     target: const LatLng(36.0251, 10.4901), // Adjust as needed
-    zoom: 16,
+    zoom: 19.3,
   );
 
   void onMapCreated(GoogleMapController controller) async {
