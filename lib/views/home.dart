@@ -11,19 +11,24 @@ class _HomePageState extends State<HomePage> {
   int chestSize = 15;
 
   // Firestore reference
-  final CollectionReference chestsRef = FirebaseFirestore.instance.collection('chests');
+  final CollectionReference chestsRef = FirebaseFirestore.instance.collection(
+    'chests',
+  );
 
   // Markers for chests
   final Set<Marker> markers = {};
 
-  // Map Camera Position
-
+  // Visible chests (within proximity)
+  final RxSet<String> visibleChestIds = RxSet<String>();
 
   Future<void> _loadChestIcon() async {
     _chestIcon = await BitmapDescriptor.fromAssetImage(
       ImageConfiguration(
         devicePixelRatio: 2.0,
-        size: Size(chestSize.toDouble(), chestSize.toDouble()), // Use chestSize here
+        size: Size(
+          chestSize.toDouble(),
+          chestSize.toDouble(),
+        ), // Use chestSize here
       ),
       'assets/images/chest.png',
     );
@@ -31,17 +36,37 @@ class _HomePageState extends State<HomePage> {
 
   void _setupFirestoreListener() {
     chestsRef.snapshots().listen((snapshot) {
-      setState(() {
-        markers.clear();
-        for (var doc in snapshot.docs) {
-          final data = doc.data() as Map<String, dynamic>;
-          final location = data['location'] as Map<String, dynamic>;
-          final lat = location['lat'];
-          final lng = location['lng'];
+      _updateChestMarkers(snapshot);
+    });
+  }
+
+  void _updateChestMarkers(QuerySnapshot snapshot) {
+    setState(() {
+      markers.clear();
+
+      for (var doc in snapshot.docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        final location = data['location'] as Map<String, dynamic>;
+        final lat = location['lat'];
+        final lng = location['lng'];
+        final chestLocation = LatLng(lat, lng);
+
+        // Check if chest is within proximity
+        final bool isInProximity = homeCtrl.isChestInProximity(chestLocation);
+
+        // Update visible chests set
+        if (isInProximity) {
+          visibleChestIds.add(doc.id);
+        } else {
+          visibleChestIds.remove(doc.id);
+        }
+
+        // Only add marker if chest is within proximity
+        if (isInProximity) {
           markers.add(
             Marker(
               markerId: MarkerId(doc.id),
-              position: LatLng(lat, lng),
+              position: chestLocation,
               icon: _chestIcon!, // Safe to use after initialization
               onTap: () {
                 // Show quiz challenge when marker is tapped
@@ -50,7 +75,7 @@ class _HomePageState extends State<HomePage> {
             ),
           );
         }
-      });
+      }
     });
   }
 
@@ -59,7 +84,10 @@ class _HomePageState extends State<HomePage> {
     parkBoundary.add(
       Polygon(
         polygonId: PolygonId('park_boundary'),
-        points: parkPolygonCoords.map((latLng) => LatLng(latLng.latitude, latLng.longitude)).toList(),
+        points:
+            parkPolygonCoords
+                .map((latLng) => LatLng(latLng.latitude, latLng.longitude))
+                .toList(),
         strokeWidth: 2, // Thickness of the border line
         strokeColor: themeCtrl.primaryColor, // Green color for the boundary
         fillColor: Colors.transparent, // Transparent fill (only outline)
@@ -76,8 +104,13 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    // Listen for real-time updates from Firestore
     _initialize();
+
+    // Listen for location updates to refresh chest visibility
+    ever(homeCtrl.currentPosition, (_) {
+      // Refresh chest markers when user location changes
+      chestsRef.get().then((snapshot) => _updateChestMarkers(snapshot));
+    });
   }
 
   @override
@@ -87,59 +120,121 @@ class _HomePageState extends State<HomePage> {
         children: [
           GoogleMap(
             onMapCreated: homeCtrl.onMapCreated,
-              initialCameraPosition: homeCtrl.initialPosition,
+            initialCameraPosition: homeCtrl.initialPosition,
             polygons: parkBoundary, // Add the park boundary here
             markers: markers,
-              zoomControlsEnabled: false,
-              mapToolbarEnabled: false,
-              compassEnabled: false,
+            zoomControlsEnabled: false,
+            mapToolbarEnabled: false,
+            compassEnabled: false,
+            myLocationEnabled: true,
+            myLocationButtonEnabled: false,
           ),
-             // Leaderboard Button (Top-Left)
-            Positioned(
-              top: 16,
-              left: 16,
-              child: FloatingActionButton(
-                heroTag: "leaderboardBtn",
-                shape: CircleBorder(),
-                backgroundColor: themeCtrl.backgroundColor,
-                onPressed: () {
-                  // leaderboard logic
-                  Get.toNamed('/leaderboard');
-                },
-                child: Icon(
-                  Icons.emoji_events,
-                  size: 25,
-                  color: themeCtrl.primaryColor,
-                ),
+          // Leaderboard Button (Top-Left)
+          Positioned(
+            top: 16,
+            left: 16,
+            child: FloatingActionButton(
+              heroTag: "leaderboardBtn",
+              shape: CircleBorder(),
+              backgroundColor: themeCtrl.backgroundColor,
+              onPressed: () {
+                // leaderboard logic
+                Get.toNamed('/leaderboard');
+              },
+              child: Icon(
+                Icons.emoji_events,
+                size: 25,
+                color: themeCtrl.primaryColor,
               ),
             ),
+          ),
 
-            // Profile Button (Top-Right)
-            Positioned(
-              top: 16,
-              right: 16,
-              child: FloatingActionButton(
-                heroTag: "profileBtn",
-                shape: CircleBorder(),
-                backgroundColor: themeCtrl.backgroundColor,
-                onPressed: () {
-                  Get.toNamed('/profile');
-                },
-                child: Icon(
-                  Icons.person_rounded,
-                  size: 25,
-                  color: themeCtrl.primaryColor,
-                ),
+          // Profile Button (Top-Right)
+          Positioned(
+            top: 16,
+            right: 16,
+            child: FloatingActionButton(
+              heroTag: "profileBtn",
+              shape: CircleBorder(),
+              backgroundColor: themeCtrl.backgroundColor,
+              onPressed: () {
+                Get.toNamed('/profile');
+              },
+              child: Icon(
+                Icons.person_rounded,
+                size: 25,
+                color: themeCtrl.primaryColor,
               ),
             ),
-         
+          ),
+
+          // My Location Button (Bottom-Left)
+          Positioned(
+            bottom: 16,
+            left: 16,
+            child: FloatingActionButton(
+              heroTag: "myLocationBtn",
+              shape: CircleBorder(),
+              backgroundColor: themeCtrl.backgroundColor,
+              onPressed: () {
+                if (homeCtrl.currentPosition.value != null) {
+                  homeCtrl.animateToUserLocation(
+                    homeCtrl.currentPosition.value!,
+                  );
+                }
+              },
+              child: Icon(
+                Icons.my_location,
+                size: 25,
+                color: themeCtrl.primaryColor,
+              ),
+            ),
+          ),
+
+          // Add Chest Button (Bottom-Right)
           Positioned(
             bottom: 16,
             right: 16,
             child: FloatingActionButton(
               heroTag: "addChestBtn",
-              onPressed: _chestIcon != null ? () => generateRandomChests(5) : null,
+              onPressed:
+                  _chestIcon != null ? () => generateRandomChests(5) : null,
               child: Icon(Icons.add),
+            ),
+          ),
+
+          // Chest count indicator
+          Positioned(
+            top: 80,
+            left: 16,
+            child: Obx(
+              () => Container(
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: themeCtrl.backgroundColor,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 4,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Image.asset('assets/images/chest.png', height: 24),
+                    SizedBox(width: 8),
+                    Text(
+                      '${visibleChestIds.length} nearby',
+                      style: TextStyle(
+                        color: themeCtrl.primaryColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ],
@@ -160,10 +255,11 @@ class _HomePageState extends State<HomePage> {
       // Create the chest document in Firestore
       await chestsRef.doc(uuid).set({
         'id': uuid,
-        "location": Location(
-            lat: randomLocation.latitude,
-            lng: randomLocation.longitude)
-            .toJson(),
+        "location":
+            Location(
+              lat: randomLocation.latitude,
+              lng: randomLocation.longitude,
+            ).toJson(),
         'bonusType': randomBonusType,
         'spawnedAt': FieldValue.serverTimestamp(),
         'expiresAt': Timestamp.fromDate(DateTime.now().add(Duration(days: 7))),
@@ -171,20 +267,24 @@ class _HomePageState extends State<HomePage> {
 
       print("## Chest $uuid generated and saved successfully!");
 
-      // Add the marker to the map
-      setState(() {
-        markers.add(
-          Marker(
-            markerId: MarkerId(uuid),
-            position: randomLocation,
-            icon: _chestIcon!, // Use the pre-loaded icon ✅
-            onTap: () {
-              // Show quiz challenge when marker is tapped
-              showQuizBottomSheet(context, uuid);
-            },
-          ),
-        );
-      });
+      // Check if the new chest is within proximity
+      if (homeCtrl.isChestInProximity(randomLocation)) {
+        // Add the marker to the map
+        setState(() {
+          markers.add(
+            Marker(
+              markerId: MarkerId(uuid),
+              position: randomLocation,
+              icon: _chestIcon!, // Use the pre-loaded icon ✅
+              onTap: () {
+                // Show quiz challenge when marker is tapped
+                showQuizBottomSheet(context, uuid);
+              },
+            ),
+          );
+          visibleChestIds.add(uuid);
+        });
+      }
     }
   }
 
@@ -196,7 +296,7 @@ class _HomePageState extends State<HomePage> {
     // Reload the icon with new size
     _loadChestIcon().then((_) {
       // Refresh all markers to use the new icon
-      _setupFirestoreListener();
+      chestsRef.get().then((snapshot) => _updateChestMarkers(snapshot));
     });
   }
 }
@@ -227,11 +327,11 @@ bool _isPointInPolygon(LatLng point, List<LatLng> polygon) {
 
   for (int i = 0; i < polygon.length; i++) {
     if (((polygon[i].latitude > point.latitude) !=
-        (polygon[j].latitude > point.latitude)) &&
+            (polygon[j].latitude > point.latitude)) &&
         (point.longitude <
             (polygon[j].longitude - polygon[i].longitude) *
-                (point.latitude - polygon[i].latitude) /
-                (polygon[j].latitude - polygon[i].latitude) +
+                    (point.latitude - polygon[i].latitude) /
+                    (polygon[j].latitude - polygon[i].latitude) +
                 polygon[i].longitude)) {
       c = !c; // Toggle the flag
     }
