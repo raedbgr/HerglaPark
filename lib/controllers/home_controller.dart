@@ -107,11 +107,9 @@ class HomeController extends GetxController {
 
   // Animate camera to user location
   void animateToUserLocation(Position position) {
-    if (mapController != null) {
-      mapController.animateCamera(
-        CameraUpdate.newLatLng(LatLng(position.latitude, position.longitude)),
-      );
-    }
+    mapController.animateCamera(
+      CameraUpdate.newLatLng(LatLng(position.latitude, position.longitude)),
+    );
   }
 
   void onMapCreated(GoogleMapController controller) async {

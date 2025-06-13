@@ -74,7 +74,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   // Helper method to get bonus icon based on type
   IconData _getBonusIcon(String type) {
-    switch (type?.toLowerCase()) {
+    switch (type.toLowerCase()) {
       case 'vr':
         return Icons.vrpano_rounded;
       case 'karting':
@@ -88,7 +88,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   // Helper method to get bonus name based on type
   String _getBonusName(String type) {
-    switch (type?.toLowerCase()) {
+    switch (type.toLowerCase()) {
       case 'vr':
         return 'VR Experience';
       case 'karting':
@@ -102,7 +102,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   // Helper method to get bonus color based on type
   Color _getBonusColor(String type) {
-    switch (type?.toLowerCase()) {
+    switch (type.toLowerCase()) {
       case 'vr':
         return Colors.blue;
       case 'karting':
