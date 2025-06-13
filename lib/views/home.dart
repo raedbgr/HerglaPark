@@ -8,7 +8,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   BitmapDescriptor? _chestIcon;
   final Set<Polygon> parkBoundary = {};
-  int chestSize = 15;
+  int chestSize = 5;
   double? currentZoom;
   double? initialZoom;
 
