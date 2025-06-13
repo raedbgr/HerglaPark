@@ -9,6 +9,8 @@ class _HomePageState extends State<HomePage> {
   BitmapDescriptor? _chestIcon;
   final Set<Polygon> parkBoundary = {};
   int chestSize = 15;
+  double? currentZoom;
+  double? initialZoom;
 
   // Firestore reference
   final CollectionReference chestsRef = FirebaseFirestore.instance.collection(
@@ -118,20 +120,38 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       body: Stack(
         children: [
-          GoogleMap(
-            onMapCreated: homeCtrl.onMapCreated,
-            initialCameraPosition: homeCtrl.initialPosition,
-            polygons: parkBoundary, // Add the park boundary here
-            markers: markers,
-            zoomControlsEnabled: false,
-            mapToolbarEnabled: false,
-            compassEnabled: false,
-            myLocationEnabled: true,
-            myLocationButtonEnabled: false,
-            scrollGesturesEnabled: false, // Disable scrolling gestures
-            rotateGesturesEnabled: false, // Optionally disable rotation
-            tiltGesturesEnabled: false, // Optionally disable tilt
-            zoomGesturesEnabled: true, // Optionally disable zoom gestures
+          GestureDetector(
+            onScaleStart: (ScaleStartDetails details) {
+              // Record the current zoom level when the pinch gesture starts
+              initialZoom = currentZoom;
+            },
+            onScaleUpdate: (ScaleUpdateDetails details) {
+              // Adjust zoom level based on the pinch gesture
+              if (initialZoom != null && currentZoom != null && homeCtrl.mapController != null) {
+                double newZoom = initialZoom! + (details.scale - 1) * 2.0; // Sensitivity of 2.0, adjust as needed
+                homeCtrl.mapController.moveCamera(CameraUpdate.zoomTo(newZoom));
+              }
+            },
+            child: GoogleMap(
+              onMapCreated: homeCtrl.onMapCreated,
+              initialCameraPosition: homeCtrl.initialPosition,
+              polygons: parkBoundary, // Add the park boundary here
+              markers: markers,
+              zoomControlsEnabled: false,
+              mapToolbarEnabled: false,
+              compassEnabled: false,
+              buildingsEnabled: false,
+              myLocationEnabled: true,
+              myLocationButtonEnabled: false,
+              scrollGesturesEnabled: false,
+              rotateGesturesEnabled: false,
+              tiltGesturesEnabled: false,
+              zoomGesturesEnabled: false,
+              onCameraMove: (CameraPosition position) {
+                // Update currentZoom whenever the camera moves
+                currentZoom = position.zoom;
+              },
+            ),
           ),
           // Leaderboard Button (Top-Left)
           Positioned(

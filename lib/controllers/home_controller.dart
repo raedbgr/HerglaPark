@@ -6,11 +6,7 @@ class HomeController extends GetxController {
   // Observable variables for user's current location
   final Rx<Position?> currentPosition = Rx<Position?>(null);
   final RxBool isLocationServiceEnabled = false.obs;
-  final RxDouble proximityThreshold = 12.0.obs;
-
-  // Remove these variables as we'll use the built-in location indicator
-  // final Rx<Marker?> userMarker = Rx<Marker?>(null);
-  // BitmapDescriptor? userLocationIcon;
+  final RxDouble proximityThreshold = 15.0.obs;
 
   final CameraPosition initialPosition = CameraPosition(
     target: const LatLng(36.0251, 10.4901), // Adjust as needed
@@ -103,13 +99,13 @@ class HomeController extends GetxController {
     // This method would cancel the stream subscription if needed
   }
 
-  // Remove the _updateUserMarker method as we don't need it anymore
-
   // Animate camera to user location
   void animateToUserLocation(Position position) {
-    mapController.animateCamera(
-      CameraUpdate.newLatLng(LatLng(position.latitude, position.longitude)),
-    );
+    if (mapController != null) {
+      mapController.animateCamera(
+        CameraUpdate.newLatLng(LatLng(position.latitude, position.longitude)),
+      );
+    }
   }
 
   void onMapCreated(GoogleMapController controller) async {
