@@ -117,20 +117,10 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: themeCtrl.backgroundColor,
+      backgroundColor: themeCtrl.primaryColor,
       body: SafeArea(
         child: Stack(
           children: [
-            // background image
-            Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                image: DecorationImage(
-                  image: AssetImage('assets/images/background.png'),
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
             Container(
               width: double.infinity,
               margin: EdgeInsets.only(top: 150, left: 10, right: 10),
@@ -166,7 +156,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               Icon(
                                 Icons.star_border_rounded,
                                 size: 30,
-                                color: themeCtrl.secondaryColor,
+                                color: themeCtrl.backgroundColor,
                               ),
                               Text(
                                 'POINTS',
@@ -194,7 +184,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               Icon(
                                 Icons.view_in_ar_rounded,
                                 size: 30,
-                                color: themeCtrl.secondaryColor,
+                                color: themeCtrl.backgroundColor,
                               ),
                               Text(
                                 'CHESTS OPENED',
@@ -222,7 +212,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               Icon(
                                 Icons.leaderboard_rounded,
                                 size: 30,
-                                color: themeCtrl.secondaryColor,
+                                color: themeCtrl.backgroundColor,
                               ),
                               Text(
                                 'RANK',

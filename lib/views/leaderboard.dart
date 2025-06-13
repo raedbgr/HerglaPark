@@ -24,11 +24,12 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
 
     try {
       // Fetch users ordered by chests opened
-      final QuerySnapshot snapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .orderBy('chestsOpened', descending: true)
-          .limit(20) // Top 20 players
-          .get();
+      final QuerySnapshot snapshot =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .orderBy('chestsOpened', descending: true)
+              .limit(20) // Top 20 players
+              .get();
 
       List<Map<String, dynamic>> leaderboardEntries = [];
       int rank = 1;
@@ -61,30 +62,12 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: themeCtrl.primaryColor,
-      appBar: AppBar(
-        backgroundColor: themeCtrl.primaryColor,
-        elevation: 0,
-        title: Text(
-          'LEADERBOARD',
-          style: TextStyle(
-            fontFamily: 'Serif',
-            fontWeight: FontWeight.bold,
-            fontSize: 24,
-            color: themeCtrl.backgroundColor,
-          ),
-        ),
-        centerTitle: true,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: themeCtrl.backgroundColor),
-          onPressed: () => Get.back(),
-        ),
-      ),
       body: SafeArea(
-        child: Column(
+        child: Stack(
           children: [
             // Header section
             Container(
-              padding: EdgeInsets.symmetric(vertical: 20),
+              padding: EdgeInsets.symmetric(vertical: 90),
               color: themeCtrl.primaryColor,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -99,6 +82,8 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
             // Leaderboard list
             Expanded(
               child: Container(
+                width: double.infinity,
+                margin: EdgeInsets.only(top: 150, left: 10, right: 10),
                 decoration: BoxDecoration(
                   color: themeCtrl.backgroundColor,
                   borderRadius: BorderRadius.only(
@@ -106,111 +91,154 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                     topRight: Radius.circular(30),
                   ),
                 ),
-                child: _isLoading
-                    ? Center(child: CircularProgressIndicator(color: themeCtrl.secondaryColor))
-                    : _leaderboardData.isEmpty
+                child:
+                    _isLoading
+                        ? Center(
+                          child: CircularProgressIndicator(
+                            color: themeCtrl.secondaryColor,
+                          ),
+                        )
+                        : _leaderboardData.isEmpty
                         ? Center(child: Text('No data available'))
                         : ListView.builder(
-                            padding: EdgeInsets.only(top: 20),
-                            itemCount: _leaderboardData.length,
-                            itemBuilder: (context, index) {
-                              final entry = _leaderboardData[index];
-                              final bool isCurrentUser = entry['userId'] == FirebaseAuth.instance.currentUser?.uid;
-                              
-                              return Container(
-                                margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                                decoration: BoxDecoration(
-                                  color: isCurrentUser ? themeCtrl.secondaryColor.withOpacity(0.1) : Colors.white,
-                                  borderRadius: BorderRadius.circular(12),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.05),
-                                      blurRadius: 5,
-                                      offset: Offset(0, 2),
+                          padding: EdgeInsets.only(top: 20),
+                          itemCount: _leaderboardData.length,
+                          itemBuilder: (context, index) {
+                            final entry = _leaderboardData[index];
+                            final bool isCurrentUser =
+                                entry['userId'] ==
+                                FirebaseAuth.instance.currentUser?.uid;
+
+                            return Container(
+                              margin: EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                              padding: EdgeInsets.symmetric(
+                                vertical: 12,
+                                horizontal: 16,
+                              ),
+                              decoration: BoxDecoration(
+                                color:
+                                    isCurrentUser
+                                        ? themeCtrl.secondaryColor.withOpacity(
+                                          0.1,
+                                        )
+                                        : Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.05),
+                                    blurRadius: 5,
+                                    offset: Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                children: [
+                                  // Rank
+                                  Container(
+                                    width: 40,
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      color: _getRankColor(entry['rank']),
+                                      shape: BoxShape.circle,
                                     ),
-                                  ],
-                                ),
-                                child: Row(
-                                  children: [
-                                    // Rank
-                                    Container(
-                                      width: 40,
-                                      height: 40,
-                                      decoration: BoxDecoration(
-                                        color: _getRankColor(entry['rank']),
-                                        shape: BoxShape.circle,
+                                    child: Center(
+                                      child: Text(
+                                        '#${entry['rank']}',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                        ),
                                       ),
-                                      child: Center(
-                                        child: Text(
-                                          '#${entry['rank']}',
+                                    ),
+                                  ),
+                                  SizedBox(width: 16),
+                                  // Username
+                                  Expanded(
+                                    flex: 2,
+                                    child: Text(
+                                      entry['username'],
+                                      style: TextStyle(
+                                        fontWeight:
+                                            isCurrentUser
+                                                ? FontWeight.bold
+                                                : FontWeight.normal,
+                                        fontSize: 16,
+                                        color: themeCtrl.primaryColor,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  // Chests opened
+                                  Expanded(
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.emoji_events,
+                                          color: themeCtrl.secondaryColor,
+                                          size: 20,
+                                        ),
+                                        SizedBox(width: 4),
+                                        Text(
+                                          '${entry['chestsOpened']}',
                                           style: TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold,
+                                            fontWeight: FontWeight.w500,
                                             fontSize: 16,
                                           ),
                                         ),
-                                      ),
+                                      ],
                                     ),
-                                    SizedBox(width: 16),
-                                    // Username
-                                    Expanded(
-                                      flex: 2,
-                                      child: Text(
-                                        entry['username'],
-                                        style: TextStyle(
-                                          fontWeight: isCurrentUser ? FontWeight.bold : FontWeight.normal,
-                                          fontSize: 16,
-                                          color: themeCtrl.primaryColor,
+                                  ),
+                                  // Points
+                                  Expanded(
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.star,
+                                          color: Colors.amber,
+                                          size: 20,
                                         ),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
+                                        SizedBox(width: 4),
+                                        Text(
+                                          '${entry['points']}',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w500,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    // Chests opened
-                                    Expanded(
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          Icon(Icons.emoji_events, 
-                                            color: themeCtrl.secondaryColor,
-                                            size: 20,
-                                          ),
-                                          SizedBox(width: 4),
-                                          Text(
-                                            '${entry['chestsOpened']}',
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.w500,
-                                              fontSize: 16,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    // Points
-                                    Expanded(
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          Icon(Icons.star, 
-                                            color: Colors.amber,
-                                            size: 20,
-                                          ),
-                                          SizedBox(width: 4),
-                                          Text(
-                                            '${entry['points']}',
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.w500,
-                                              fontSize: 16,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                          ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+              ),
+            ),
+            // back button
+            Positioned(
+              top: 16,
+              left: 16,
+              child: FloatingActionButton(
+                heroTag: "backBtn",
+                shape: CircleBorder(),
+                backgroundColor: themeCtrl.backgroundColor,
+                onPressed: () {
+                  Get.back();
+                },
+                child: Icon(
+                  Icons.arrow_back_rounded,
+                  size: 25,
+                  color: themeCtrl.primaryColor,
+                ),
               ),
             ),
           ],
