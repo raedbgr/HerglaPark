@@ -42,6 +42,7 @@ export 'views/mini_games/ar_treasure_hunt.dart';
 export 'controllers/auth_controller.dart';
 export 'controllers/home_controller.dart';
 export 'controllers/theme_controller.dart';
+export 'controllers/mole_controller.dart';
 
 // components
 export 'components/text_field.dart';

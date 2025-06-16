@@ -71,12 +71,69 @@ class _HomePageState extends State<HomePage> {
               position: chestLocation,
               icon: _chestIcon!, // Safe to use after initialization
               onTap: () {
-                // Show quiz challenge when marker is tapped
-                showQuizBottomSheet(context, doc.id);
+                // Randomly select challenge
+                final challenges = ['quiz', 'whack_a_mole'];
+                final selectedChallenge = challenges[Random().nextInt(challenges.length)];
+                _showChallengeBottomSheet(context, doc.id, selectedChallenge);
               },
             ),
           );
         }
+      }
+    });
+  }
+
+  void _showChallengeBottomSheet(BuildContext context, String chestId, String challengeType) {
+    // Check if chest is on cooldown
+    FirebaseFirestore.instance.collection('chests').doc(chestId).get().then((doc) {
+      if (doc.exists) {
+        final data = doc.data() as Map<String, dynamic>;
+
+        // Check if chest is on cooldown
+        if (data.containsKey('cooldownUntil')) {
+          final cooldownUntil = data['cooldownUntil'] as Timestamp;
+          final cooldownEnd = cooldownUntil.toDate().add(Duration(minutes: 5));
+
+          if (DateTime.now().isBefore(cooldownEnd)) {
+            final remainingMinutes = cooldownEnd.difference(DateTime.now()).inMinutes + 1;
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: Text('Chest Locked'),
+                content: Text('This chest is still locked. You can try again in $remainingMinutes minutes.'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text('OK'),
+                  ),
+                ],
+              ),
+            );
+            return;
+          }
+        }
+
+        // Show the selected challenge
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (context) {
+            if (challengeType == 'quiz') {
+              return QuizScreen(
+                chestId: chestId,
+                onSuccess: () {},
+                onFailure: () {},
+              );
+            } else {
+              return WhackAMole(
+                chestId: chestId,
+                onSuccess: () {},
+                onFailure: () {},
+              );
+            }
+          },
+        );
       }
     });
   }
@@ -299,10 +356,11 @@ class _HomePageState extends State<HomePage> {
             Marker(
               markerId: MarkerId(uuid),
               position: randomLocation,
-              icon: _chestIcon!, // Use the pre-loaded icon ✅
+              icon: _chestIcon!,
               onTap: () {
-                // Show quiz challenge when marker is tapped
-                showQuizBottomSheet(context, uuid);
+                final challenges = ['quiz', 'whack_a_mole'];
+                final selectedChallenge = challenges[Random().nextInt(challenges.length)];
+                _showChallengeBottomSheet(context, uuid, selectedChallenge);
               },
             ),
           );
