@@ -449,37 +449,37 @@ class _MiniGameSelectorDialogState extends State<MiniGameSelectorDialog> with Si
       curve: Cubic(0.1, 0.9, 0.2, 1.0), // Ease out for deceleration
     );
 
-    // Start animation
-    _controller.forward().then((_) {
-      // Snap to the selected game
-      final targetIndex = games.indexWhere((game) => game == selectedGame, 1); // Skip first 'quiz'
-      final itemHeight = 60.0; // Height of each game name item
-      _scrollController.animateTo(
-        targetIndex * itemHeight - itemHeight / 2, // Center the selected game
-        duration: Duration(milliseconds: 500),
-        curve: Curves.easeOut,
-      ).then((_) {
-        setState(() {
-          isSpinning = false;
-        });
-        // Delay to show result, then close dialog and trigger callback
-        Future.delayed(Duration(seconds: 1), () {
-          if (mounted) {
-            Navigator.of(context).pop();
-            widget.onGameSelected(selectedGame);
-          }
-        });
-      });
+    // Calculate target position
+    final itemHeight = 60.0; // Height of each game name item
+    final cycleLength = games.length * itemHeight; // Length of one cycle of games
+    final targetIndex = games.indexWhere((game) => game == selectedGame, 1); // Skip first 'quiz'
+    final targetOffset = (targetIndex * itemHeight) + (cycleLength * 5) - (itemHeight / 2); // Center after 5 cycles
+
+    // Bind scroll position to animation
+    _animation.addListener(() {
+      if (_scrollController.hasClients) {
+        final progress = _animation.value;
+        final scrollPosition = progress * targetOffset;
+        _scrollController.jumpTo(scrollPosition % cycleLength); // Loop within cycle
+      }
     });
 
-    // Simulate initial fast scrolling
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _scrollController.jumpTo(0);
-      _scrollController.animateTo(
-        1000.0, // Large initial scroll to simulate fast spin
-        duration: Duration(seconds: 4),
-        curve: Curves.linear,
-      );
+    // Start animation
+    _controller.forward().then((_) {
+      setState(() {
+        isSpinning = false;
+      });
+      // Ensure final position is exact
+      if (_scrollController.hasClients) {
+        _scrollController.jumpTo(targetOffset % cycleLength);
+      }
+      // Delay to show result, then close dialog and trigger callback
+      Future.delayed(Duration(seconds: 1), () {
+        if (mounted) {
+          Navigator.of(context).pop();
+          widget.onGameSelected(selectedGame);
+        }
+      });
     });
   }
 
