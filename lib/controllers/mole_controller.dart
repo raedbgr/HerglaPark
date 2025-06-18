@@ -30,6 +30,16 @@ class WamController extends GetxController {
     super.onClose();
   }
 
+  void reset() {
+    gameTimer?.cancel();
+    moleTimer?.cancel();
+    score.value = 0;
+    timeLeft.value = gameDuration;
+    isGameOver.value = false;
+    moles.value = List.generate(totalHoles, (_) => false);
+    startGame();
+  }
+
   void startGame() {
     score.value = 0;
     timeLeft.value = gameDuration;

@@ -19,6 +19,7 @@ class WhackAMole extends StatefulWidget {
 class WhackAMoleState extends State<WhackAMole> with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _animation;
+  late WamController _controller;
 
   @override
   void initState() {
@@ -33,11 +34,16 @@ class WhackAMoleState extends State<WhackAMole> with SingleTickerProviderStateMi
       CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
     );
     _animationController.forward();
+
+    // Initialize and reset controller
+    _controller = Get.put(WamController());
+    _controller.reset(); // Reset game state
   }
 
   @override
   void dispose() {
     _animationController.dispose();
+    Get.delete<WamController>(); // Clean up controller
     super.dispose();
   }
 
@@ -302,7 +308,7 @@ class WhackAMoleState extends State<WhackAMole> with SingleTickerProviderStateMi
                         ),
                         SizedBox(height: 8),
                         Obx(() => Text(
-                          'Score: ${wamCtrl.score.value}/${wamCtrl.scoreToWin}',
+                          'Score: ${_controller.score.value}/${_controller.scoreToWin}',
                           style: TextStyle(
                             fontSize: 16,
                             color: Colors.grey[600],
@@ -321,16 +327,16 @@ class WhackAMoleState extends State<WhackAMole> with SingleTickerProviderStateMi
                     child: Obx(() => Row(
                       children: [
                         Expanded(
-                          flex: wamCtrl.timeLeft.value,
+                          flex: _controller.timeLeft.value,
                           child: Container(
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(5),
-                              color: wamCtrl.timeLeft.value > 10 ? Colors.green : Colors.red,
+                              color: _controller.timeLeft.value > 10 ? Colors.green : Colors.red,
                             ),
                           ),
                         ),
                         Expanded(
-                          flex: wamCtrl.gameDuration - wamCtrl.timeLeft.value,
+                          flex: _controller.gameDuration - _controller.timeLeft.value,
                           child: Container(),
                         ),
                       ],
@@ -340,9 +346,9 @@ class WhackAMoleState extends State<WhackAMole> with SingleTickerProviderStateMi
                     alignment: Alignment.centerRight,
                     padding: EdgeInsets.only(right: 20, top: 5),
                     child: Obx(() => Text(
-                      '${wamCtrl.timeLeft.value} seconds left',
+                      '${_controller.timeLeft.value} seconds left',
                       style: TextStyle(
-                        color: wamCtrl.timeLeft.value > 10 ? Colors.green : Colors.red,
+                        color: _controller.timeLeft.value > 10 ? Colors.green : Colors.red,
                         fontSize: 14,
                       ),
                     )),
@@ -352,21 +358,21 @@ class WhackAMoleState extends State<WhackAMole> with SingleTickerProviderStateMi
                       padding: EdgeInsets.all(20),
                       child: GridView.builder(
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: wamCtrl.gridSize,
+                          crossAxisCount: _controller.gridSize,
                           crossAxisSpacing: 10,
                           mainAxisSpacing: 10,
                         ),
-                        itemCount: wamCtrl.totalHoles,
+                        itemCount: _controller.totalHoles,
                         itemBuilder: (context, index) {
                           return Obx(() => GestureDetector(
-                            onTap: () => wamCtrl.hitMole(index),
+                            onTap: () => _controller.hitMole(index),
                             child: Container(
                               decoration: BoxDecoration(
                                 border: Border.all(color: Colors.black),
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: Center(
-                                child: wamCtrl.moles[index]
+                                child: _controller.moles[index]
                                     ? Image.asset('assets/images/char_normal_mole.png')
                                     : Image.asset('assets/images/bg_hole.png'),
                               ),
