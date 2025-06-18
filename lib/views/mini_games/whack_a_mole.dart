@@ -295,21 +295,28 @@ class WhackAMoleState extends State<WhackAMole> with SingleTickerProviderStateMi
     if (mounted) {
       showDialog(
         context: context,
+        barrierDismissible: true, // Allow tapping outside to dismiss
         builder: (context) => AlertDialog(
           title: Text('Challenge Failed'),
           content: Text('$reason You can try again in 5 minutes.'),
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop();
+                Navigator.of(context).pop(); // Close dialog
                 widget.onFailure();
-                Navigator.of(context).pop();
+                Navigator.of(context).pop(); // Close bottom sheet
               },
               child: Text('OK'),
             ),
           ],
         ),
-      );
+      ).then((_) {
+        // Handle dismissal by tapping outside
+        if (mounted) {
+          widget.onFailure();
+          Navigator.of(context).pop(); // Close bottom sheet
+        }
+      });
 
       // Update chest with cooldown
       FirebaseFirestore.instance.collection('chests').doc(widget.chestId).update({
