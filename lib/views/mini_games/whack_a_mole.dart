@@ -1,4 +1,7 @@
 import '/imports.dart';
+import 'dart:async';
+import 'dart:math';
+import 'package:flutter/material.dart';
 
 class WhackAMole extends StatefulWidget {
   final String chestId;
@@ -9,7 +12,7 @@ class WhackAMole extends StatefulWidget {
   WhackAMoleState createState() => WhackAMoleState();
 }
 
-class WhackAMoleState extends State<WhackAMole> with SingleTickerProviderStateMixin {
+class WhackAMoleState extends State<WhackAMole> with TickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _animation;
 
@@ -35,11 +38,15 @@ class WhackAMoleState extends State<WhackAMole> with SingleTickerProviderStateMi
   bool isCountingDown = true; // Countdown active
   Timer? countdownTimer;
 
+  // Mole animation controllers (one per hole)
+  List<AnimationController> _moleControllers = [];
+  List<Animation<double>> _moleAnimations = [];
+
   @override
   void initState() {
     super.initState();
 
-    // Setup animation
+    // Setup page animation
     _animationController = AnimationController(
       vsync: this,
       duration: Duration(milliseconds: 500),
@@ -48,6 +55,19 @@ class WhackAMoleState extends State<WhackAMole> with SingleTickerProviderStateMi
       CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
     );
     _animationController.forward();
+
+    // Setup mole animations (one controller per hole)
+    for (int i = 0; i < totalHoles; i++) {
+      final controller = AnimationController(
+        vsync: this,
+        duration: Duration(milliseconds: 300),
+      );
+      final animation = Tween<double>(begin: 60.0, end: 10.0).animate(
+        CurvedAnimation(parent: controller, curve: Curves.easeInOut),
+      );
+      _moleControllers.add(controller);
+      _moleAnimations.add(animation);
+    }
 
     // Start countdown
     startCountdown();
@@ -59,6 +79,9 @@ class WhackAMoleState extends State<WhackAMole> with SingleTickerProviderStateMi
     gameTimer?.cancel();
     moleTimer?.cancel();
     countdownTimer?.cancel();
+    for (var controller in _moleControllers) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
@@ -71,7 +94,7 @@ class WhackAMoleState extends State<WhackAMole> with SingleTickerProviderStateMi
           } else {
             isCountingDown = false;
             timer.cancel();
-            startGame(); // Start game after countdown
+            startGame();
           }
         });
       }
@@ -86,7 +109,6 @@ class WhackAMoleState extends State<WhackAMole> with SingleTickerProviderStateMi
       moles = List.generate(totalHoles, (_) => false);
     });
 
-    // Start game timer
     gameTimer = Timer.periodic(Duration(seconds: 1), (timer) {
       if (mounted) {
         setState(() {
@@ -94,13 +116,12 @@ class WhackAMoleState extends State<WhackAMole> with SingleTickerProviderStateMi
             timeLeft--;
           } else {
             timer.cancel();
-            endGame(false); // Time's up, game over
+            endGame(false);
           }
         });
       }
     });
 
-    // Start mole appearances
     showMole();
   }
 
@@ -112,32 +133,33 @@ class WhackAMoleState extends State<WhackAMole> with SingleTickerProviderStateMi
       setState(() {
         moles[holeIndex] = true;
       });
+      _moleControllers[holeIndex].forward(); // Animate mole up
     }
 
-    // Hide mole after moleStayTime
     Timer(Duration(milliseconds: moleStayTime), () {
       if (moles[holeIndex] && mounted) {
         setState(() {
           moles[holeIndex] = false;
         });
+        _moleControllers[holeIndex].reverse(); // Animate mole down
       }
     });
 
-    // Schedule next mole
     int nextInterval = minInterval + Random().nextInt(maxInterval - minInterval);
     moleTimer = Timer(Duration(milliseconds: nextInterval), showMole);
   }
 
   void hitMole(int index) {
-    if (isCountingDown) return; // Prevent interaction during countdown
+    if (isCountingDown) return;
     if (moles[index] && !isGameOver && mounted) {
       setState(() {
         moles[index] = false;
         score++;
         if (score >= scoreToWin) {
-          endGame(true); // Win condition met
+          endGame(true);
         }
       });
+      _moleControllers[index].reverse(); // Animate mole down when hit
     }
   }
 
@@ -162,10 +184,7 @@ class WhackAMoleState extends State<WhackAMole> with SingleTickerProviderStateMi
         final chestData = chestDoc.data() as Map<String, dynamic>;
         final bonusType = chestData['bonusType'] as String;
 
-        // Generate QR code
         final qrCode = _generateRandomNumericString(15);
-
-        // Create bonus
         final bonusId = Uuid().v4();
         final userId = FirebaseAuth.instance.currentUser?.uid;
 
@@ -180,10 +199,8 @@ class WhackAMoleState extends State<WhackAMole> with SingleTickerProviderStateMi
             expiresAt: Timestamp.fromDate(DateTime.now().add(Duration(days: 7))),
           );
 
-          // Save bonus to Firestore
           FirebaseFirestore.instance.collection('bonus').doc(bonusId).set(bonus.toJson());
 
-          // Update user's chestsOpened counter
           FirebaseFirestore.instance.collection('users').doc(userId).get().then((userDoc) {
             if (userDoc.exists) {
               final userData = userDoc.data() as Map<String, dynamic>;
@@ -198,7 +215,6 @@ class WhackAMoleState extends State<WhackAMole> with SingleTickerProviderStateMi
             }
           });
 
-          // Show success dialog
           showDialog(
             context: context,
             barrierDismissible: false,
@@ -279,8 +295,8 @@ class WhackAMoleState extends State<WhackAMole> with SingleTickerProviderStateMi
                         ),
                       ),
                       onPressed: () {
-                        Navigator.of(context).pop(); // Close dialog
-                        Get.back(); // Return to HomePage
+                        Navigator.of(context).pop();
+                        Get.back();
                       },
                       child: Text(
                         'Awesome!',
@@ -297,7 +313,6 @@ class WhackAMoleState extends State<WhackAMole> with SingleTickerProviderStateMi
             ),
           );
 
-          // Remove chest
           FirebaseFirestore.instance.collection('chests').doc(widget.chestId).delete();
         }
       }
@@ -315,7 +330,7 @@ class WhackAMoleState extends State<WhackAMole> with SingleTickerProviderStateMi
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Close dialog
+                Navigator.of(context).pop();
               },
               child: Text('OK'),
             ),
@@ -326,7 +341,7 @@ class WhackAMoleState extends State<WhackAMole> with SingleTickerProviderStateMi
           FirebaseFirestore.instance.collection('chests').doc(widget.chestId).update({
             'cooldownUntil': FieldValue.serverTimestamp(),
           });
-          Get.back(); // Return to HomePage
+          Get.back();
         }
       });
     }
@@ -381,7 +396,6 @@ class WhackAMoleState extends State<WhackAMole> with SingleTickerProviderStateMi
             opacity: _animation.value,
             child: Stack(
               children: [
-                // Game UI
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -453,10 +467,31 @@ class WhackAMoleState extends State<WhackAMole> with SingleTickerProviderStateMi
                                   border: Border.all(color: Colors.black),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
-                                child: Center(
-                                  child: moles[index]
-                                      ? Image.asset('assets/images/char_normal_mole.png')
-                                      : Image.asset('assets/images/bg_hole.png'),
+                                child: Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    // Background hole
+                                    Image.asset('assets/images/bg_hole.png'),
+                                    // Mole (animated)
+                                    AnimatedBuilder(
+                                      animation: _moleAnimations[index],
+                                      builder: (context, child) {
+                                        return Positioned(
+                                          top: moles[index] ? _moleAnimations[index].value : 60.0,
+                                          child: Visibility(
+                                            visible: moles[index],
+                                            child: SizedBox(
+                                              width: 100,
+                                              height: 100,
+                                              child: Image.asset('assets/images/char_normal_mole.png'),
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                    // Foreground hole
+                                    Image.asset('assets/images/fg_hole.png'),
+                                  ],
                                 ),
                               ),
                             );
@@ -466,7 +501,6 @@ class WhackAMoleState extends State<WhackAMole> with SingleTickerProviderStateMi
                     ),
                   ],
                 ),
-                // Countdown overlay
                 if (isCountingDown)
                   Container(
                     color: Colors.black54,
