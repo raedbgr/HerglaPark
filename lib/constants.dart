@@ -3,7 +3,7 @@ import 'imports.dart';
 AuthController get authCtrl => Get.find<AuthController>();
 HomeController get homeCtrl => Get.find<HomeController>();
 ThemeController get themeCtrl => Get.find<ThemeController>();
-WamController get wamCtrl => Get.find<WamController>();
+// WamController get wamCtrl => Get.find<WamController>();
 
 final List<LatLng> parkPolygonCoords = [
   LatLng(36.02558924696962, 10.489096735543416),

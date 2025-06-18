@@ -8,6 +8,6 @@ class MyBindings extends Bindings {
     Get.put(HomeController());
     Get.put(ThemeController());
     // created at demand
-    Get.lazyPut<WamController>(() => WamController());
+    // Get.lazyPut<WamController>(() => WamController());
   }
 }

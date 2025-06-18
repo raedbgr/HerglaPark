@@ -13,9 +13,7 @@ class _HomePageState extends State<HomePage> {
   double? initialZoom;
 
   // Firestore reference
-  final CollectionReference chestsRef = FirebaseFirestore.instance.collection(
-    'chests',
-  );
+  final CollectionReference chestsRef = FirebaseFirestore.instance.collection('chests');
 
   // Markers for chests
   final Set<Marker> markers = {};
@@ -30,7 +28,7 @@ class _HomePageState extends State<HomePage> {
         size: Size(
           chestSize.toDouble(),
           chestSize.toDouble(),
-        ), // Use chestSize here
+        ),
       ),
       'assets/images/chest.png',
     );
@@ -43,44 +41,46 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _updateChestMarkers(QuerySnapshot snapshot) {
-    setState(() {
-      markers.clear();
+    if (mounted) {
+      setState(() {
+        markers.clear();
 
-      for (var doc in snapshot.docs) {
-        final data = doc.data() as Map<String, dynamic>;
-        final location = data['location'] as Map<String, dynamic>;
-        final lat = location['lat'];
-        final lng = location['lng'];
-        final chestLocation = LatLng(lat, lng);
+        for (var doc in snapshot.docs) {
+          final data = doc.data() as Map<String, dynamic>;
+          final location = data['location'] as Map<String, dynamic>;
+          final lat = location['lat'];
+          final lng = location['lng'];
+          final chestLocation = LatLng(lat, lng);
 
-        // Check if chest is within proximity
-        final bool isInProximity = homeCtrl.isChestInProximity(chestLocation);
+          // Check if chest is within proximity
+          final bool isInProximity = homeCtrl.isChestInProximity(chestLocation);
 
-        // Update visible chests set
-        if (isInProximity) {
-          visibleChestIds.add(doc.id);
-        } else {
-          visibleChestIds.remove(doc.id);
+          // Update visible chests set
+          if (isInProximity) {
+            visibleChestIds.add(doc.id);
+          } else {
+            visibleChestIds.remove(doc.id);
+          }
+
+          // Only add marker if chest is within proximity
+          if (isInProximity) {
+            markers.add(
+              Marker(
+                markerId: MarkerId(doc.id),
+                position: chestLocation,
+                icon: _chestIcon!, // Safe to use after initialization
+                onTap: () {
+                  // Randomly select challenge
+                  final challenges = ['quiz', 'whack_a_mole'];
+                  final selectedChallenge = challenges[Random().nextInt(challenges.length)];
+                  _showChallengeBottomSheet(context, doc.id, selectedChallenge);
+                },
+              ),
+            );
+          }
         }
-
-        // Only add marker if chest is within proximity
-        if (isInProximity) {
-          markers.add(
-            Marker(
-              markerId: MarkerId(doc.id),
-              position: chestLocation,
-              icon: _chestIcon!, // Safe to use after initialization
-              onTap: () {
-                // Randomly select challenge
-                final challenges = ['quiz', 'whack_a_mole'];
-                final selectedChallenge = challenges[Random().nextInt(challenges.length)];
-                _showChallengeBottomSheet(context, doc.id, selectedChallenge);
-              },
-            ),
-          );
-        }
-      }
-    });
+      });
+    }
   }
 
   void _showChallengeBottomSheet(BuildContext context, String chestId, String challengeType) {
@@ -143,20 +143,17 @@ class _HomePageState extends State<HomePage> {
     parkBoundary.add(
       Polygon(
         polygonId: PolygonId('park_boundary'),
-        points:
-            parkPolygonCoords
-                .map((latLng) => LatLng(latLng.latitude, latLng.longitude))
-                .toList(),
-        strokeWidth: 2, // Thickness of the border line
-        strokeColor: themeCtrl.primaryColor, // Green color for the boundary
-        fillColor: Colors.transparent, // Transparent fill (only outline)
+        points: parkPolygonCoords.map((latLng) => LatLng(latLng.latitude, latLng.longitude)).toList(),
+        strokeWidth: 2,
+        strokeColor: themeCtrl.primaryColor,
+        fillColor: Colors.transparent,
       ),
     );
   }
 
   Future<void> _initialize() async {
-    await _loadChestIcon(); // Wait for the icon to load
-    _setupFirestoreListener(); // Then set up the listener
+    await _loadChestIcon();
+    _setupFirestoreListener();
     _setupBoudaries();
   }
 
@@ -167,7 +164,6 @@ class _HomePageState extends State<HomePage> {
 
     // Listen for location updates to refresh chest visibility
     ever(homeCtrl.currentPosition, (_) {
-      // Refresh chest markers when user location changes
       chestsRef.get().then((snapshot) => _updateChestMarkers(snapshot));
     });
   }
@@ -179,20 +175,18 @@ class _HomePageState extends State<HomePage> {
         children: [
           GestureDetector(
             onScaleStart: (ScaleStartDetails details) {
-              // Record the current zoom level when the pinch gesture starts
               initialZoom = currentZoom;
             },
             onScaleUpdate: (ScaleUpdateDetails details) {
-              // Adjust zoom level based on the pinch gesture
               if (initialZoom != null && currentZoom != null && homeCtrl.mapController != null) {
-                double newZoom = initialZoom! + (details.scale - 1) * 2.0; // Sensitivity of 2.0, adjust as needed
+                double newZoom = initialZoom! + (details.scale - 1) * 2.0;
                 homeCtrl.mapController.moveCamera(CameraUpdate.zoomTo(newZoom));
               }
             },
             child: GoogleMap(
               onMapCreated: homeCtrl.onMapCreated,
               initialCameraPosition: homeCtrl.initialPosition,
-              polygons: parkBoundary, // Add the park boundary here
+              polygons: parkBoundary,
               markers: markers,
               zoomControlsEnabled: false,
               mapToolbarEnabled: false,
@@ -205,12 +199,10 @@ class _HomePageState extends State<HomePage> {
               tiltGesturesEnabled: false,
               zoomGesturesEnabled: false,
               onCameraMove: (CameraPosition position) {
-                // Update currentZoom whenever the camera moves
                 currentZoom = position.zoom;
               },
             ),
           ),
-          // Leaderboard Button (Top-Left)
           Positioned(
             top: 16,
             left: 16,
@@ -219,7 +211,6 @@ class _HomePageState extends State<HomePage> {
               shape: CircleBorder(),
               backgroundColor: themeCtrl.backgroundColor,
               onPressed: () {
-                // leaderboard logic
                 Get.toNamed('/leaderboard');
               },
               child: Icon(
@@ -229,8 +220,6 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
-
-          // Profile Button (Top-Right)
           Positioned(
             top: 16,
             right: 16,
@@ -248,25 +237,20 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
-
-          // Add Chest Button (Bottom-Right)
           Positioned(
             bottom: 16,
             right: 16,
             child: FloatingActionButton(
               heroTag: "addChestBtn",
-              onPressed:
-                  _chestIcon != null ? () => generateRandomChests(5) : null,
+              onPressed: _chestIcon != null ? () => generateRandomChests(5) : null,
               child: Icon(Icons.add),
             ),
           ),
-
-          // Chest count indicator
           Positioned(
             top: 80,
             left: 16,
             child: Obx(
-              () => Container(
+                  () => Container(
                 padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
                   color: themeCtrl.backgroundColor,
@@ -301,23 +285,17 @@ class _HomePageState extends State<HomePage> {
   }
 
   void generateRandomChests(int count) async {
-    if (_chestIcon == null) return; // Wait for the icon to load
+    if (_chestIcon == null) return;
 
     for (int i = 0; i < count; i++) {
       final randomLocation = generateRandomPointInPolygon(parkPolygonCoords);
       final randomBonusType = getRandomBonusType();
 
-      // Generate a unique ID
       final uuid = Uuid().v4();
 
-      // Create the chest document in Firestore
       await chestsRef.doc(uuid).set({
         'id': uuid,
-        "location":
-            Location(
-              lat: randomLocation.latitude,
-              lng: randomLocation.longitude,
-            ).toJson(),
+        "location": Location(lat: randomLocation.latitude, lng: randomLocation.longitude).toJson(),
         'bonusType': randomBonusType,
         'spawnedAt': FieldValue.serverTimestamp(),
         'expiresAt': Timestamp.fromDate(DateTime.now().add(Duration(days: 7))),
@@ -325,9 +303,7 @@ class _HomePageState extends State<HomePage> {
 
       print("## Chest $uuid generated and saved successfully!");
 
-      // Check if the new chest is within proximity
-      if (homeCtrl.isChestInProximity(randomLocation)) {
-        // Add the marker to the map
+      if (homeCtrl.isChestInProximity(randomLocation) && mounted) {
         setState(() {
           markers.add(
             Marker(
@@ -347,14 +323,13 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // Method to change chest icon size
   void setChestSize(int size) {
-    setState(() {
-      chestSize = size;
-    });
-    // Reload the icon with new size
+    if (mounted) {
+      setState(() {
+        chestSize = size;
+      });
+    }
     _loadChestIcon().then((_) {
-      // Refresh all markers to use the new icon
       chestsRef.get().then((snapshot) => _updateChestMarkers(snapshot));
     });
   }
@@ -382,19 +357,18 @@ LatLng generateRandomPointInPolygon(List<LatLng> polygon) {
 // Helper function to check if a point is inside a polygon
 bool _isPointInPolygon(LatLng point, List<LatLng> polygon) {
   bool c = false;
-  int j = polygon.length - 1; // Initialize j outside the loop
+  int j = polygon.length - 1;
 
   for (int i = 0; i < polygon.length; i++) {
-    if (((polygon[i].latitude > point.latitude) !=
-            (polygon[j].latitude > point.latitude)) &&
+    if (((polygon[i].latitude > point.latitude) != (polygon[j].latitude > point.latitude)) &&
         (point.longitude <
             (polygon[j].longitude - polygon[i].longitude) *
-                    (point.latitude - polygon[i].latitude) /
-                    (polygon[j].latitude - polygon[i].latitude) +
+                (point.latitude - polygon[i].latitude) /
+                (polygon[j].latitude - polygon[i].latitude) +
                 polygon[i].longitude)) {
-      c = !c; // Toggle the flag
+      c = !c;
     }
-    j = i; // Update j to the current index
+    j = i;
   }
 
   return c;

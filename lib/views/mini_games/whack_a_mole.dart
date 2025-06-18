@@ -1,4 +1,6 @@
 import '/imports.dart';
+import 'dart:async';
+import 'dart:math';
 
 class WhackAMole extends StatefulWidget {
   final String chestId;
@@ -19,7 +21,23 @@ class WhackAMole extends StatefulWidget {
 class WhackAMoleState extends State<WhackAMole> with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _animation;
-  late WamController _controller;
+
+  // Game constants
+  final int gridSize = 3; // 3x3 grid
+  final int totalHoles = 9;
+  final int gameDuration = 30; // 30 seconds
+  final int scoreToWin = 20; // Points needed to win
+  final int moleStayTime = 1000; // 1 second per mole
+  final int minInterval = 1000; // Min 1 second between moles
+  final int maxInterval = 2000; // Max 2 seconds between moles
+
+  // Game state
+  List<bool> moles = List.generate(9, (_) => false); // Mole visibility
+  int score = 0; // Current score
+  int timeLeft = 30; // Time remaining
+  bool isGameOver = false; // Game over flag
+  Timer? gameTimer;
+  Timer? moleTimer;
 
   @override
   void initState() {
@@ -35,21 +53,98 @@ class WhackAMoleState extends State<WhackAMole> with SingleTickerProviderStateMi
     );
     _animationController.forward();
 
-    // Initialize and reset controller
-    _controller = Get.put(WamController());
-    _controller.reset(); // Reset game state
+    // Start game
+    startGame();
   }
 
   @override
   void dispose() {
     _animationController.dispose();
-    Get.delete<WamController>(); // Clean up controller
+    gameTimer?.cancel();
+    moleTimer?.cancel();
     super.dispose();
+  }
+
+  void startGame() {
+    setState(() {
+      score = 0;
+      timeLeft = gameDuration;
+      isGameOver = false;
+      moles = List.generate(totalHoles, (_) => false);
+    });
+
+    // Start game timer
+    gameTimer = Timer.periodic(Duration(seconds: 1), (timer) {
+      if (mounted) {
+        setState(() {
+          if (timeLeft > 0) {
+            timeLeft--;
+          } else {
+            timer.cancel();
+            endGame(false); // Time's up, game over
+          }
+        });
+      }
+    });
+
+    // Start mole appearances
+    showMole();
+  }
+
+  void showMole() {
+    if (isGameOver) return;
+
+    int holeIndex = Random().nextInt(totalHoles);
+    if (mounted) {
+      setState(() {
+        moles[holeIndex] = true;
+      });
+    }
+
+    // Hide mole after moleStayTime
+    Timer(Duration(milliseconds: moleStayTime), () {
+      if (moles[holeIndex] && mounted) {
+        setState(() {
+          moles[holeIndex] = false;
+        });
+      }
+    });
+
+    // Schedule next mole
+    int nextInterval = minInterval + Random().nextInt(maxInterval - minInterval);
+    moleTimer = Timer(Duration(milliseconds: nextInterval), showMole);
+  }
+
+  void hitMole(int index) {
+    if (moles[index] && !isGameOver && mounted) {
+      setState(() {
+        moles[index] = false;
+        score++;
+        if (score >= scoreToWin) {
+          endGame(true); // Win condition met
+        }
+      });
+    }
+  }
+
+  void endGame(bool won) {
+    if (mounted) {
+      setState(() {
+        isGameOver = true;
+      });
+    }
+    gameTimer?.cancel();
+    moleTimer?.cancel();
+    if (won) {
+      handleSuccess();
+    } else {
+      handleFailure("Time's up or not enough points!");
+    }
   }
 
   void handleSuccess() {
     FirebaseFirestore.instance.collection('chests').doc(widget.chestId).get().then((chestDoc) {
-      if (chestDoc.exists) {
+      if (chestDoc.exists && mounted) {
         final chestData = chestDoc.data() as Map<String, dynamic>;
         final bonusType = chestData['bonusType'] as String;
 
@@ -197,28 +292,30 @@ class WhackAMoleState extends State<WhackAMole> with SingleTickerProviderStateMi
   }
 
   void handleFailure(String reason) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Challenge Failed'),
-        content: Text('$reason You can try again in 5 minutes.'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              widget.onFailure();
-              Navigator.of(context).pop();
-            },
-            child: Text('OK'),
-          ),
-        ],
-      ),
-    );
+    if (mounted) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Challenge Failed'),
+          content: Text('$reason You can try again in 5 minutes.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                widget.onFailure();
+                Navigator.of(context).pop();
+              },
+              child: Text('OK'),
+            ),
+          ],
+        ),
+      );
 
-    // Update chest with cooldown
-    FirebaseFirestore.instance.collection('chests').doc(widget.chestId).update({
-      'cooldownUntil': FieldValue.serverTimestamp(),
-    });
+      // Update chest with cooldown
+      FirebaseFirestore.instance.collection('chests').doc(widget.chestId).update({
+        'cooldownUntil': FieldValue.serverTimestamp(),
+      });
+    }
   }
 
   String _generateRandomNumericString(int length) {
@@ -307,13 +404,13 @@ class WhackAMoleState extends State<WhackAMole> with SingleTickerProviderStateMi
                           ),
                         ),
                         SizedBox(height: 8),
-                        Obx(() => Text(
-                          'Score: ${_controller.score.value}/${_controller.scoreToWin}',
+                        Text(
+                          'Score: $score/$scoreToWin',
                           style: TextStyle(
                             fontSize: 16,
                             color: Colors.grey[600],
                           ),
-                        )),
+                        ),
                       ],
                     ),
                   ),
@@ -324,60 +421,60 @@ class WhackAMoleState extends State<WhackAMole> with SingleTickerProviderStateMi
                       borderRadius: BorderRadius.circular(5),
                       color: Colors.grey[200],
                     ),
-                    child: Obx(() => Row(
+                    child: Row(
                       children: [
                         Expanded(
-                          flex: _controller.timeLeft.value,
+                          flex: timeLeft,
                           child: Container(
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(5),
-                              color: _controller.timeLeft.value > 10 ? Colors.green : Colors.red,
+                              color: timeLeft > 10 ? Colors.green : Colors.red,
                             ),
                           ),
                         ),
                         Expanded(
-                          flex: _controller.gameDuration - _controller.timeLeft.value,
+                          flex: gameDuration - timeLeft,
                           child: Container(),
                         ),
                       ],
-                    )),
+                    ),
                   ),
                   Container(
                     alignment: Alignment.centerRight,
                     padding: EdgeInsets.only(right: 20, top: 5),
-                    child: Obx(() => Text(
-                      '${_controller.timeLeft.value} seconds left',
+                    child: Text(
+                      '$timeLeft seconds left',
                       style: TextStyle(
-                        color: _controller.timeLeft.value > 10 ? Colors.green : Colors.red,
+                        color: timeLeft > 10 ? Colors.green : Colors.red,
                         fontSize: 14,
                       ),
-                    )),
+                    ),
                   ),
                   Expanded(
                     child: Padding(
                       padding: EdgeInsets.all(20),
                       child: GridView.builder(
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: _controller.gridSize,
+                          crossAxisCount: gridSize,
                           crossAxisSpacing: 10,
                           mainAxisSpacing: 10,
                         ),
-                        itemCount: _controller.totalHoles,
+                        itemCount: totalHoles,
                         itemBuilder: (context, index) {
-                          return Obx(() => GestureDetector(
-                            onTap: () => _controller.hitMole(index),
+                          return GestureDetector(
+                            onTap: () => hitMole(index),
                             child: Container(
                               decoration: BoxDecoration(
                                 border: Border.all(color: Colors.black),
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: Center(
-                                child: _controller.moles[index]
+                                child: moles[index]
                                     ? Image.asset('assets/images/char_normal_mole.png')
                                     : Image.asset('assets/images/bg_hole.png'),
                               ),
                             ),
-                          ));
+                          );
                         },
                       ),
                     ),
