@@ -69,6 +69,7 @@ class _HomePageState extends State<HomePage> {
                 markerId: MarkerId(doc.id),
                 position: chestLocation,
                 icon: _chestIcon!, // Safe to use after initialization
+                consumeTapEvents: true, // Prevent map from centering on tap
                 onTap: () {
                   // Randomly select challenge
                   final challenges = ['quiz', 'whack_a_mole'];
@@ -122,14 +123,30 @@ class _HomePageState extends State<HomePage> {
             if (challengeType == 'quiz') {
               return QuizScreen(
                 chestId: chestId,
-                onSuccess: () {},
-                onFailure: () {},
+                onSuccess: () {
+                  if (homeCtrl.currentPosition.value != null) {
+                    homeCtrl.animateToUserLocation(homeCtrl.currentPosition.value!);
+                  }
+                },
+                onFailure: () {
+                  if (homeCtrl.currentPosition.value != null) {
+                    homeCtrl.animateToUserLocation(homeCtrl.currentPosition.value!);
+                  }
+                },
               );
             } else {
               return WhackAMole(
                 chestId: chestId,
-                onSuccess: () {},
-                onFailure: () {},
+                onSuccess: () {
+                  if (homeCtrl.currentPosition.value != null) {
+                    homeCtrl.animateToUserLocation(homeCtrl.currentPosition.value!);
+                  }
+                },
+                onFailure: () {
+                  if (homeCtrl.currentPosition.value != null) {
+                    homeCtrl.animateToUserLocation(homeCtrl.currentPosition.value!);
+                  }
+                },
               );
             }
           },
@@ -310,6 +327,7 @@ class _HomePageState extends State<HomePage> {
               markerId: MarkerId(uuid),
               position: randomLocation,
               icon: _chestIcon!,
+              consumeTapEvents: true, // Prevent map from centering on tap
               onTap: () {
                 final challenges = ['quiz', 'whack_a_mole'];
                 final selectedChallenge = challenges[Random().nextInt(challenges.length)];

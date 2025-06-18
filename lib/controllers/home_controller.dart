@@ -9,22 +9,22 @@ class HomeController extends GetxController {
   final RxDouble proximityThreshold = 150.0.obs;
 
   final CameraPosition initialPosition = CameraPosition(
-    target: const LatLng(36.0251, 10.4901), // Adjust as needed
+    target: const LatLng(36.0251, 10.4901), // Default position
     zoom: 19.3,
   );
+
+  StreamSubscription<Position>? _positionStream;
 
   @override
   void onInit() {
     super.onInit();
     _initLocationTracking();
-    // Remove this line as we don't need to load a custom icon anymore
-    // _loadUserLocationIcon();
   }
 
   @override
   void onClose() {
-    // Cancel any active location subscriptions
     stopLocationUpdates();
+    mapController.dispose();
     super.onClose();
   }
 
@@ -32,8 +32,7 @@ class HomeController extends GetxController {
   Future<void> _initLocationTracking() async {
     try {
       // Check if location services are enabled
-      isLocationServiceEnabled.value =
-          await Geolocator.isLocationServiceEnabled();
+      isLocationServiceEnabled.value = await Geolocator.isLocationServiceEnabled();
 
       if (!isLocationServiceEnabled.value) {
         Get.snackbar(
@@ -77,34 +76,41 @@ class HomeController extends GetxController {
     }
   }
 
-  // Remove the _loadUserLocationIcon method as we don't need it anymore
-
   // Start location updates
   void startLocationUpdates() {
-    Geolocator.getPositionStream(
+    _positionStream = Geolocator.getPositionStream(
       locationSettings: LocationSettings(
         accuracy: LocationAccuracy.high,
         distanceFilter: 5, // Update if user moves 5 meters
       ),
     ).listen((Position position) {
       currentPosition.value = position;
-      // Remove this line as we don't need to update a custom marker anymore
-      // _updateUserMarker(position);
       animateToUserLocation(position);
     });
   }
 
   // Stop location updates
   void stopLocationUpdates() {
-    // This method would cancel the stream subscription if needed
+    _positionStream?.cancel();
+    _positionStream = null;
   }
 
   // Animate camera to user location
   void animateToUserLocation(Position position) {
-    if (mapController != null) {
-      mapController.animateCamera(
-        CameraUpdate.newLatLng(LatLng(position.latitude, position.longitude)),
-      );
+    mapController.animateCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(
+          target: LatLng(position.latitude, position.longitude),
+          zoom: 19.3, // Maintain consistent zoom level
+        ),
+      ),
+    );
+  }
+
+  // Explicitly re-center map on user
+  void recenterOnUser() {
+    if (currentPosition.value != null) {
+      animateToUserLocation(currentPosition.value!);
     }
   }
 
@@ -113,10 +119,8 @@ class HomeController extends GetxController {
     String style = await rootBundle.loadString('assets/map/map_style.json');
     mapController.setMapStyle(style);
 
-    // If we already have a position, move camera to it
-    if (currentPosition.value != null) {
-      animateToUserLocation(currentPosition.value!);
-    }
+    // Move camera to user location if available
+    recenterOnUser();
   }
 
   // Calculate distance between two points in meters
