@@ -1,4 +1,6 @@
 import '/imports.dart';
+import 'dart:math';
+import 'package:flutter/animation.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -71,10 +73,7 @@ class _HomePageState extends State<HomePage> {
                 icon: _chestIcon!, // Safe to use after initialization
                 consumeTapEvents: true, // Prevent map from centering on tap
                 onTap: () {
-                  // Randomly select challenge
-                  final challenges = ['quiz', 'whack_a_mole'];
-                  final selectedChallenge = challenges[Random().nextInt(challenges.length)];
-                  _showChallengeBottomSheet(context, doc.id, selectedChallenge);
+                  _showMiniGameSelectorDialog(context, doc.id);
                 },
               ),
             );
@@ -84,10 +83,10 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  void _showChallengeBottomSheet(BuildContext context, String chestId, String challengeType) {
+  void _showMiniGameSelectorDialog(BuildContext context, String chestId) {
     // Check if chest is on cooldown
     FirebaseFirestore.instance.collection('chests').doc(chestId).get().then((doc) {
-      if (doc.exists) {
+      if (doc.exists && mounted) {
         final data = doc.data() as Map<String, dynamic>;
 
         // Check if chest is on cooldown
@@ -114,45 +113,57 @@ class _HomePageState extends State<HomePage> {
           }
         }
 
-        // Show the selected challenge
-        showModalBottomSheet(
+        // Show mini-game selector dialog
+        showDialog(
           context: context,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (context) {
-            if (challengeType == 'quiz') {
-              return QuizScreen(
-                chestId: chestId,
-                onSuccess: () {
-                  if (homeCtrl.currentPosition.value != null) {
-                    homeCtrl.animateToUserLocation(homeCtrl.currentPosition.value!);
-                  }
-                },
-                onFailure: () {
-                  if (homeCtrl.currentPosition.value != null) {
-                    homeCtrl.animateToUserLocation(homeCtrl.currentPosition.value!);
-                  }
-                },
-              );
-            } else {
-              return WhackAMole(
-                chestId: chestId,
-                onSuccess: () {
-                  if (homeCtrl.currentPosition.value != null) {
-                    homeCtrl.animateToUserLocation(homeCtrl.currentPosition.value!);
-                  }
-                },
-                onFailure: () {
-                  if (homeCtrl.currentPosition.value != null) {
-                    homeCtrl.animateToUserLocation(homeCtrl.currentPosition.value!);
-                  }
-                },
-              );
-            }
-          },
+          barrierDismissible: false, // Non-dismissible
+          builder: (context) => MiniGameSelectorDialog(
+            onGameSelected: (selectedChallenge) {
+              _showChallengeBottomSheet(context, chestId, selectedChallenge);
+            },
+          ),
         );
       }
     });
+  }
+
+  void _showChallengeBottomSheet(BuildContext context, String chestId, String challengeType) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        if (challengeType == 'quiz') {
+          return QuizScreen(
+            chestId: chestId,
+            onSuccess: () {
+              if (homeCtrl.currentPosition.value != null) {
+                homeCtrl.animateToUserLocation(homeCtrl.currentPosition.value!);
+              }
+            },
+            onFailure: () {
+              if (homeCtrl.currentPosition.value != null) {
+                homeCtrl.animateToUserLocation(homeCtrl.currentPosition.value!);
+              }
+            },
+          );
+        } else {
+          return WhackAMole(
+            chestId: chestId,
+            onSuccess: () {
+              if (homeCtrl.currentPosition.value != null) {
+                homeCtrl.animateToUserLocation(homeCtrl.currentPosition.value!);
+              }
+            },
+            onFailure: () {
+              if (homeCtrl.currentPosition.value != null) {
+                homeCtrl.animateToUserLocation(homeCtrl.currentPosition.value!);
+              }
+            },
+          );
+        }
+      },
+    );
   }
 
   void _setupBoudaries() {
@@ -329,9 +340,7 @@ class _HomePageState extends State<HomePage> {
               icon: _chestIcon!,
               consumeTapEvents: true, // Prevent map from centering on tap
               onTap: () {
-                final challenges = ['quiz', 'whack_a_mole'];
-                final selectedChallenge = challenges[Random().nextInt(challenges.length)];
-                _showChallengeBottomSheet(context, uuid, selectedChallenge);
+                _showMiniGameSelectorDialog(context, uuid);
               },
             ),
           );
@@ -397,4 +406,189 @@ String getRandomBonusType() {
   final List<String> bonusTypes = ["vr", "karting", "shooting"];
   final random = Random();
   return bonusTypes[random.nextInt(bonusTypes.length)];
+}
+
+// Mini-game selector dialog with slot machine animation
+class MiniGameSelectorDialog extends StatefulWidget {
+  final Function(String) onGameSelected;
+
+  const MiniGameSelectorDialog({super.key, required this.onGameSelected});
+
+  @override
+  _MiniGameSelectorDialogState createState() => _MiniGameSelectorDialogState();
+}
+
+class _MiniGameSelectorDialogState extends State<MiniGameSelectorDialog> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+  late ScrollController _scrollController;
+  final List<String> games = ['quiz', 'whack_a_mole', 'quiz', 'whack_a_mole']; // Repeated for seamless loop
+  String selectedGame = '';
+  bool isSpinning = true;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Randomly select the target game
+    final challenges = ['quiz', 'whack_a_mole'];
+    selectedGame = challenges[Random().nextInt(challenges.length)];
+
+    // Initialize scroll controller
+    _scrollController = ScrollController();
+
+    // Initialize animation controller
+    _controller = AnimationController(
+      vsync: this,
+      duration: Duration(seconds: 5), // Total duration of spin
+    );
+
+    // Custom curve to simulate slowing down
+    _animation = CurvedAnimation(
+      parent: _controller,
+      curve: Cubic(0.1, 0.9, 0.2, 1.0), // Ease out for deceleration
+    );
+
+    // Start animation
+    _controller.forward().then((_) {
+      // Snap to the selected game
+      final targetIndex = games.indexWhere((game) => game == selectedGame, 1); // Skip first 'quiz'
+      final itemHeight = 60.0; // Height of each game name item
+      _scrollController.animateTo(
+        targetIndex * itemHeight - itemHeight / 2, // Center the selected game
+        duration: Duration(milliseconds: 500),
+        curve: Curves.easeOut,
+      ).then((_) {
+        setState(() {
+          isSpinning = false;
+        });
+        // Delay to show result, then close dialog and trigger callback
+        Future.delayed(Duration(seconds: 1), () {
+          if (mounted) {
+            Navigator.of(context).pop();
+            widget.onGameSelected(selectedGame);
+          }
+        });
+      });
+    });
+
+    // Simulate initial fast scrolling
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollController.jumpTo(0);
+      _scrollController.animateTo(
+        1000.0, // Large initial scroll to simulate fast spin
+        duration: Duration(seconds: 4),
+        curve: Curves.linear,
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  String _getDisplayName(String game) {
+    return game == 'quiz' ? 'Quiz' : 'Whack a Mole';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      contentPadding: EdgeInsets.zero,
+      content: Container(
+        width: 300,
+        height: 200,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'Selecting Mini-Game...',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+            SizedBox(height: 20),
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                // Slot machine container
+                Container(
+                  height: 100,
+                  width: 200,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey[300]!, width: 2),
+                    borderRadius: BorderRadius.circular(10),
+                    color: Colors.grey[100],
+                  ),
+                  child: ShaderMask(
+                    shaderCallback: (Rect bounds) {
+                      return LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Colors.white,
+                          Colors.white,
+                          Colors.transparent,
+                        ],
+                        stops: [0.0, 0.3, 0.7, 1.0],
+                      ).createShader(bounds);
+                    },
+                    blendMode: BlendMode.dstIn,
+                    child: ListView.builder(
+                      controller: _scrollController,
+                      physics: isSpinning ? NeverScrollableScrollPhysics() : ClampingScrollPhysics(),
+                      itemCount: games.length * 10, // Repeat for continuous scroll
+                      itemBuilder: (context, index) {
+                        final game = games[index % games.length];
+                        return Container(
+                          height: 60,
+                          alignment: Alignment.center,
+                          child: Text(
+                            _getDisplayName(game),
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                // Top and bottom lines
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      width: 180,
+                      height: 2,
+                      color: Colors.black87,
+                    ),
+                    SizedBox(height: 56),
+                    Container(
+                      width: 180,
+                      height: 2,
+                      color: Colors.black87,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
