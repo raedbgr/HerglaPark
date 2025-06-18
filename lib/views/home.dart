@@ -249,29 +249,6 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
 
-          // My Location Button (Bottom-Left)
-          // Positioned(
-          //   bottom: 16,
-          //   left: 16,
-          //   child: FloatingActionButton(
-          //     heroTag: "myLocationBtn",
-          //     shape: CircleBorder(),
-          //     backgroundColor: themeCtrl.backgroundColor,
-          //     onPressed: () {
-          //       if (homeCtrl.currentPosition.value != null) {
-          //         homeCtrl.animateToUserLocation(
-          //           homeCtrl.currentPosition.value!,
-          //         );
-          //       }
-          //     },
-          //     child: Icon(
-          //       Icons.my_location,
-          //       size: 25,
-          //       color: themeCtrl.primaryColor,
-          //     ),
-          //   ),
-          // ),
-
           // Add Chest Button (Bottom-Right)
           Positioned(
             bottom: 16,
