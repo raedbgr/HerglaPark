@@ -302,25 +302,21 @@ class WhackAMoleState extends State<WhackAMole> with SingleTickerProviderStateMi
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Close dialog
-                widget.onFailure();
-                Navigator.of(context).pop(); // Close bottom sheet
+                Navigator.of(context).pop(); // Close dialog only
               },
               child: Text('OK'),
             ),
           ],
         ),
       ).then((_) {
-        // Handle dismissal by tapping outside
-        if (mounted) {
+        // Close bottom sheet and trigger onFailure after dialog dismissal
+        if (mounted && Navigator.canPop(context)) {
+          FirebaseFirestore.instance.collection('chests').doc(widget.chestId).update({
+            'cooldownUntil': FieldValue.serverTimestamp(),
+          });
           widget.onFailure();
           Navigator.of(context).pop(); // Close bottom sheet
         }
-      });
-
-      // Update chest with cooldown
-      FirebaseFirestore.instance.collection('chests').doc(widget.chestId).update({
-        'cooldownUntil': FieldValue.serverTimestamp(),
       });
     }
   }
