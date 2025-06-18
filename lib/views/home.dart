@@ -1,6 +1,4 @@
 import '/imports.dart';
-import 'dart:math';
-import 'package:flutter/animation.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -84,12 +82,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _showMiniGameSelectorDialog(BuildContext context, String chestId) {
-    // Check if chest is on cooldown
     FirebaseFirestore.instance.collection('chests').doc(chestId).get().then((doc) {
       if (doc.exists && mounted) {
         final data = doc.data() as Map<String, dynamic>;
 
-        // Check if chest is on cooldown
         if (data.containsKey('cooldownUntil')) {
           final cooldownUntil = data['cooldownUntil'] as Timestamp;
           final cooldownEnd = cooldownUntil.toDate().add(Duration(minutes: 5));
@@ -113,13 +109,12 @@ class _HomePageState extends State<HomePage> {
           }
         }
 
-        // Show mini-game selector dialog
         showDialog(
           context: context,
-          barrierDismissible: false, // Non-dismissible
+          barrierDismissible: false,
           builder: (context) => MiniGameSelectorDialog(
             onGameSelected: (selectedChallenge) {
-              _showChallengeBottomSheet(context, chestId, selectedChallenge);
+              _navigateToChallenge(context, chestId, selectedChallenge);
             },
           ),
         );
@@ -127,47 +122,18 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  void _showChallengeBottomSheet(BuildContext context, String chestId, String challengeType) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        if (challengeType == 'quiz') {
-          return QuizScreen(
-            chestId: chestId,
-            onSuccess: () {
-              if (homeCtrl.currentPosition.value != null) {
-                homeCtrl.animateToUserLocation(homeCtrl.currentPosition.value!);
-              }
-            },
-            onFailure: () {
-              if (homeCtrl.currentPosition.value != null) {
-                homeCtrl.animateToUserLocation(homeCtrl.currentPosition.value!);
-              }
-            },
-          );
-        } else {
-          return WhackAMole(
-            chestId: chestId,
-            onSuccess: () {
-              if (homeCtrl.currentPosition.value != null) {
-                homeCtrl.animateToUserLocation(homeCtrl.currentPosition.value!);
-              }
-            },
-            onFailure: () {
-              if (homeCtrl.currentPosition.value != null) {
-                homeCtrl.animateToUserLocation(homeCtrl.currentPosition.value!);
-              }
-            },
-          );
-        }
-      },
-    );
+  void _navigateToChallenge(BuildContext context, String chestId, String challengeType) {
+    if (challengeType == 'quiz') {
+      Get.toNamed('/quiz', arguments: {'chestId': chestId});
+    } else {
+      Get.toNamed('/whack_a_mole', arguments: {'chestId': chestId});
+    }
+    if (homeCtrl.currentPosition.value != null) {
+      homeCtrl.animateToUserLocation(homeCtrl.currentPosition.value!);
+    }
   }
 
   void _setupBoudaries() {
-    // Define the park boundary polygon
     parkBoundary.add(
       Polygon(
         polygonId: PolygonId('park_boundary'),
@@ -190,7 +156,6 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     _initialize();
 
-    // Listen for location updates to refresh chest visibility
     ever(homeCtrl.currentPosition, (_) {
       chestsRef.get().then((snapshot) => _updateChestMarkers(snapshot));
     });
@@ -338,7 +303,7 @@ class _HomePageState extends State<HomePage> {
               markerId: MarkerId(uuid),
               position: randomLocation,
               icon: _chestIcon!,
-              consumeTapEvents: true, // Prevent map from centering on tap
+              consumeTapEvents: true,
               onTap: () {
                 _showMiniGameSelectorDialog(context, uuid);
               },
@@ -362,7 +327,6 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-// Function to generate a random point inside a polygon
 LatLng generateRandomPointInPolygon(List<LatLng> polygon) {
   final random = Random();
   double minLat = polygon.map((p) => p.latitude).reduce(min);
@@ -381,7 +345,6 @@ LatLng generateRandomPointInPolygon(List<LatLng> polygon) {
   }
 }
 
-// Helper function to check if a point is inside a polygon
 bool _isPointInPolygon(LatLng point, List<LatLng> polygon) {
   bool c = false;
   int j = polygon.length - 1;
@@ -401,14 +364,12 @@ bool _isPointInPolygon(LatLng point, List<LatLng> polygon) {
   return c;
 }
 
-// Function to generate a random bonus type
 String getRandomBonusType() {
   final List<String> bonusTypes = ["vr", "karting", "shooting"];
   final random = Random();
   return bonusTypes[random.nextInt(bonusTypes.length)];
 }
 
-// Mini-game selector dialog with slot machine animation
 class MiniGameSelectorDialog extends StatefulWidget {
   final Function(String) onGameSelected;
 
@@ -422,7 +383,7 @@ class _MiniGameSelectorDialogState extends State<MiniGameSelectorDialog> with Si
   late AnimationController _controller;
   late Animation<double> _animation;
   late ScrollController _scrollController;
-  final List<String> games = ['quiz', 'whack_a_mole', 'quiz', 'whack_a_mole']; // Repeated for seamless loop
+  final List<String> games = ['quiz', 'whack_a_mole', 'quiz', 'whack_a_mole'];
   String selectedGame = '';
   bool isSpinning = true;
 
@@ -430,50 +391,41 @@ class _MiniGameSelectorDialogState extends State<MiniGameSelectorDialog> with Si
   void initState() {
     super.initState();
 
-    // Randomly select the target game
     final challenges = ['quiz', 'whack_a_mole'];
     selectedGame = challenges[Random().nextInt(challenges.length)];
 
-    // Initialize scroll controller
     _scrollController = ScrollController();
 
-    // Initialize animation controller
     _controller = AnimationController(
       vsync: this,
-      duration: Duration(seconds: 5), // Total duration of spin
+      duration: Duration(seconds: 5),
     );
 
-    // Custom curve to simulate slowing down
     _animation = CurvedAnimation(
       parent: _controller,
-      curve: Cubic(0.1, 0.9, 0.2, 1.0), // Ease out for deceleration
+      curve: Cubic(0.1, 0.9, 0.2, 1.0),
     );
 
-    // Calculate target position
-    final itemHeight = 60.0; // Height of each game name item
-    final cycleLength = games.length * itemHeight; // Length of one cycle of games
-    final targetIndex = games.indexWhere((game) => game == selectedGame, 1); // Skip first 'quiz'
-    final targetOffset = (targetIndex * itemHeight) + (cycleLength * 5) - (itemHeight / 2); // Center after 5 cycles
+    final itemHeight = 60.0;
+    final cycleLength = games.length * itemHeight;
+    final targetIndex = games.indexWhere((game) => game == selectedGame, 1);
+    final targetOffset = (targetIndex * itemHeight) + (cycleLength * 5) - (itemHeight / 2);
 
-    // Bind scroll position to animation
     _animation.addListener(() {
       if (_scrollController.hasClients) {
         final progress = _animation.value;
         final scrollPosition = progress * targetOffset;
-        _scrollController.jumpTo(scrollPosition % cycleLength); // Loop within cycle
+        _scrollController.jumpTo(scrollPosition % cycleLength);
       }
     });
 
-    // Start animation
     _controller.forward().then((_) {
       setState(() {
         isSpinning = false;
       });
-      // Ensure final position is exact
       if (_scrollController.hasClients) {
         _scrollController.jumpTo(targetOffset % cycleLength);
       }
-      // Delay to show result, then close dialog and trigger callback
       Future.delayed(Duration(seconds: 1), () {
         if (mounted) {
           Navigator.of(context).pop();
@@ -521,7 +473,6 @@ class _MiniGameSelectorDialogState extends State<MiniGameSelectorDialog> with Si
             Stack(
               alignment: Alignment.center,
               children: [
-                // Slot machine container
                 Container(
                   height: 100,
                   width: 200,
@@ -548,7 +499,7 @@ class _MiniGameSelectorDialogState extends State<MiniGameSelectorDialog> with Si
                     child: ListView.builder(
                       controller: _scrollController,
                       physics: isSpinning ? NeverScrollableScrollPhysics() : ClampingScrollPhysics(),
-                      itemCount: games.length * 10, // Repeat for continuous scroll
+                      itemCount: games.length * 10,
                       itemBuilder: (context, index) {
                         final game = games[index % games.length];
                         return Container(
@@ -567,7 +518,6 @@ class _MiniGameSelectorDialogState extends State<MiniGameSelectorDialog> with Si
                     ),
                   ),
                 ),
-                // Top and bottom lines
                 Column(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [

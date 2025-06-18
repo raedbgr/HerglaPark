@@ -1,18 +1,9 @@
 import '/imports.dart';
-import 'dart:async';
-import 'dart:math';
 
 class WhackAMole extends StatefulWidget {
   final String chestId;
-  final Function onSuccess;
-  final Function onFailure;
 
-  const WhackAMole({
-    super.key,
-    required this.chestId,
-    required this.onSuccess,
-    required this.onFailure,
-  });
+  const WhackAMole({super.key, required this.chestId});
 
   @override
   WhackAMoleState createState() => WhackAMoleState();
@@ -39,6 +30,11 @@ class WhackAMoleState extends State<WhackAMole> with SingleTickerProviderStateMi
   Timer? gameTimer;
   Timer? moleTimer;
 
+  // Countdown state
+  int countdown = 3; // Start at 3
+  bool isCountingDown = true; // Countdown active
+  Timer? countdownTimer;
+
   @override
   void initState() {
     super.initState();
@@ -53,8 +49,8 @@ class WhackAMoleState extends State<WhackAMole> with SingleTickerProviderStateMi
     );
     _animationController.forward();
 
-    // Start game
-    startGame();
+    // Start countdown
+    startCountdown();
   }
 
   @override
@@ -62,7 +58,24 @@ class WhackAMoleState extends State<WhackAMole> with SingleTickerProviderStateMi
     _animationController.dispose();
     gameTimer?.cancel();
     moleTimer?.cancel();
+    countdownTimer?.cancel();
     super.dispose();
+  }
+
+  void startCountdown() {
+    countdownTimer = Timer.periodic(Duration(seconds: 1), (timer) {
+      if (mounted) {
+        setState(() {
+          if (countdown > 0) {
+            countdown--;
+          } else {
+            isCountingDown = false;
+            timer.cancel();
+            startGame(); // Start game after countdown
+          }
+        });
+      }
+    });
   }
 
   void startGame() {
@@ -116,6 +129,7 @@ class WhackAMoleState extends State<WhackAMole> with SingleTickerProviderStateMi
   }
 
   void hitMole(int index) {
+    if (isCountingDown) return; // Prevent interaction during countdown
     if (moles[index] && !isGameOver && mounted) {
       setState(() {
         moles[index] = false;
@@ -265,9 +279,8 @@ class WhackAMoleState extends State<WhackAMole> with SingleTickerProviderStateMi
                         ),
                       ),
                       onPressed: () {
-                        Navigator.of(context).pop();
-                        widget.onSuccess();
-                        Navigator.of(context).pop();
+                        Navigator.of(context).pop(); // Close dialog
+                        Get.back(); // Return to HomePage
                       },
                       child: Text(
                         'Awesome!',
@@ -295,27 +308,25 @@ class WhackAMoleState extends State<WhackAMole> with SingleTickerProviderStateMi
     if (mounted) {
       showDialog(
         context: context,
-        barrierDismissible: true, // Allow tapping outside to dismiss
+        barrierDismissible: true,
         builder: (context) => AlertDialog(
           title: Text('Challenge Failed'),
           content: Text('$reason You can try again in 5 minutes.'),
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Close dialog only
+                Navigator.of(context).pop(); // Close dialog
               },
               child: Text('OK'),
             ),
           ],
         ),
       ).then((_) {
-        // Close bottom sheet and trigger onFailure after dialog dismissal
-        if (mounted && Navigator.canPop(context)) {
+        if (mounted) {
           FirebaseFirestore.instance.collection('chests').doc(widget.chestId).update({
             'cooldownUntil': FieldValue.serverTimestamp(),
           });
-          widget.onFailure();
-          Navigator.of(context).pop(); // Close bottom sheet
+          Get.back(); // Return to HomePage
         }
       });
     }
@@ -361,129 +372,130 @@ class WhackAMoleState extends State<WhackAMole> with SingleTickerProviderStateMi
     return AnimatedBuilder(
       animation: _animation,
       builder: (context, child) {
-        return Transform.translate(
-          offset: Offset(0, (1 - _animation.value) * 300),
-          child: Opacity(
+        return Scaffold(
+          appBar: AppBar(
+            title: Text('Whack-a-Mole Challenge'),
+            automaticallyImplyLeading: true,
+          ),
+          body: Opacity(
             opacity: _animation.value,
-            child: Container(
-              height: MediaQuery.of(context).size.height * 0.9,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 10,
-                    spreadRadius: 0,
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Container(
-                    margin: EdgeInsets.only(top: 8),
-                    height: 4,
-                    width: 40,
-                    alignment: Alignment.center,
-                    child: Container(
-                      height: 4,
-                      width: 40,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[300],
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  Container(
-                    padding: EdgeInsets.all(20),
-                    child: Column(
-                      children: [
-                        Text(
-                          'Whack-a-Mole Challenge',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(height: 8),
-                        Text(
-                          'Score: $score/$scoreToWin',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    margin: EdgeInsets.symmetric(horizontal: 20),
-                    height: 10,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(5),
-                      color: Colors.grey[200],
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          flex: timeLeft,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(5),
-                              color: timeLeft > 10 ? Colors.green : Colors.red,
+            child: Stack(
+              children: [
+                // Game UI
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Container(
+                      padding: EdgeInsets.all(20),
+                      child: Column(
+                        children: [
+                          Text(
+                            'Score: $score/$scoreToWin',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey[600],
                             ),
                           ),
-                        ),
-                        Expanded(
-                          flex: gameDuration - timeLeft,
-                          child: Container(),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    alignment: Alignment.centerRight,
-                    padding: EdgeInsets.only(right: 20, top: 5),
-                    child: Text(
-                      '$timeLeft seconds left',
-                      style: TextStyle(
-                        color: timeLeft > 10 ? Colors.green : Colors.red,
-                        fontSize: 14,
+                        ],
                       ),
                     ),
-                  ),
-                  Expanded(
-                    child: Padding(
-                      padding: EdgeInsets.all(20),
-                      child: GridView.builder(
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: gridSize,
-                          crossAxisSpacing: 10,
-                          mainAxisSpacing: 10,
-                        ),
-                        itemCount: totalHoles,
-                        itemBuilder: (context, index) {
-                          return GestureDetector(
-                            onTap: () => hitMole(index),
+                    Container(
+                      margin: EdgeInsets.symmetric(horizontal: 20),
+                      height: 10,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(5),
+                        color: Colors.grey[200],
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            flex: timeLeft,
                             child: Container(
                               decoration: BoxDecoration(
-                                border: Border.all(color: Colors.black),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Center(
-                                child: moles[index]
-                                    ? Image.asset('assets/images/char_normal_mole.png')
-                                    : Image.asset('assets/images/bg_hole.png'),
+                                borderRadius: BorderRadius.circular(5),
+                                color: timeLeft > 10 ? Colors.green : Colors.red,
                               ),
                             ),
-                          );
-                        },
+                          ),
+                          Expanded(
+                            flex: gameDuration - timeLeft,
+                            child: Container(),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      alignment: Alignment.centerRight,
+                      padding: EdgeInsets.only(right: 20, top: 5),
+                      child: Text(
+                        '$timeLeft seconds left',
+                        style: TextStyle(
+                          color: timeLeft > 10 ? Colors.green : Colors.red,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Padding(
+                        padding: EdgeInsets.all(20),
+                        child: GridView.builder(
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: gridSize,
+                            crossAxisSpacing: 10,
+                            mainAxisSpacing: 10,
+                          ),
+                          itemCount: totalHoles,
+                          itemBuilder: (context, index) {
+                            return GestureDetector(
+                              onTap: () => hitMole(index),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.black),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Center(
+                                  child: moles[index]
+                                      ? Image.asset('assets/images/char_normal_mole.png')
+                                      : Image.asset('assets/images/bg_hole.png'),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                // Countdown overlay
+                if (isCountingDown)
+                  Container(
+                    color: Colors.black54,
+                    child: Center(
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          SizedBox(
+                            width: 100,
+                            height: 100,
+                            child: CircularProgressIndicator(
+                              value: countdown / 3,
+                              strokeWidth: 8,
+                              color: Colors.white,
+                            ),
+                          ),
+                          Text(
+                            '$countdown',
+                            style: TextStyle(
+                              fontSize: 48,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                ],
-              ),
+              ],
             ),
           ),
         );

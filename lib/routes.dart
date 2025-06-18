@@ -1,4 +1,4 @@
-import 'imports.dart';
+import '/imports.dart';
 
 class Routes {
   static final routes = [
@@ -9,5 +9,19 @@ class Routes {
     GetPage(name: '/home', page: () => HomePage()),
     GetPage(name: '/profile', page: () => ProfilePage(), transition: Transition.rightToLeft),
     GetPage(name: '/leaderboard', page: () => LeaderboardPage(), transition: Transition.leftToRight),
+    GetPage(
+      name: '/quiz',
+      page: () => QuizScreen(
+        chestId: Get.arguments['chestId'] as String,
+      ),
+      transition: Transition.fadeIn,
+    ),
+    GetPage(
+      name: '/whack_a_mole',
+      page: () => WhackAMole(
+        chestId: Get.arguments['chestId'] as String,
+      ),
+      transition: Transition.fadeIn,
+    ),
   ];
 }
