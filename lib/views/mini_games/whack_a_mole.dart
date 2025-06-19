@@ -285,6 +285,14 @@ class WhackAMoleState extends State<WhackAMole> with TickerProviderStateMixin {
       appBar: AppBar(title: Text('Whack-a-Mole Challenge')),
       body: Stack(
         children: [
+          Container(
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('assets/images/bg.png'),
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
           Column(
             children: [
               Padding(
@@ -298,7 +306,7 @@ class WhackAMoleState extends State<WhackAMole> with TickerProviderStateMixin {
               ),
               Padding(
                 padding: EdgeInsets.symmetric(vertical: 5),
-                child: Text('$timeLeft seconds left', style: TextStyle(color: timeLeft > 10 ? Colors.green : Colors.red)),
+                child: Text('$timeLeft seconds left', style: TextStyle(color: timeLeft > 10 ? themeCtrl.primaryColor : themeCtrl.secondaryColor)),
               ),
               Expanded(
                 child: LayoutBuilder(
@@ -340,7 +348,7 @@ class WhackAMoleState extends State<WhackAMole> with TickerProviderStateMixin {
                                 if (_isTapped[index])
                                   TweenAnimationBuilder(
                                     tween: Tween(begin: 0.0, end: 1.0),
-                                    duration: const Duration(milliseconds: 300),
+                                    duration: const Duration(milliseconds: 500),
                                     builder: (_, value, child) => Opacity(
                                       opacity: value,
                                       child: Transform.scale(scale: value, child: child),
