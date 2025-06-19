@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="gcm_defaultSenderId" translatable="false">1050355498864</string>
+    <string name="google_api_key" translatable="false">AIzaSyASQ_UYi7diGlow4CWP9o1mralEWOeD520</string>
+    <string name="google_app_id" translatable="false">1:1050355498864:android:1dfaff090b45d4c25059b5</string>
+    <string name="google_crash_reporting_api_key" translatable="false">AIzaSyASQ_UYi7diGlow4CWP9o1mralEWOeD520</string>
+    <string name="google_storage_bucket" translatable="false">herglapark-9b9c7.firebasestorage.app</string>
+    <string name="project_id" translatable="false">herglapark-9b9c7</string>
+</resources>

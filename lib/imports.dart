@@ -33,10 +33,9 @@ export 'views/home.dart';
 export 'views/profile.dart';
 export 'views/leaderboard.dart';
 export 'views/mini_games/quiz.dart';
-export 'views/mini_games/memory_match.dart';
+export 'views/mini_games/card_match.dart';
 export 'views/mini_games/slide_puzzle.dart';
 export 'views/mini_games/whack_a_mole.dart';
-export 'views/mini_games/ar_treasure_hunt.dart';
 
 // controllers
 export 'controllers/auth_controller.dart';

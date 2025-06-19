@@ -23,10 +23,5 @@ class Routes {
       ),
       transition: Transition.fadeIn,
     ),
-    GetPage(
-      name: '/treasure_hunt',
-      page: () => const TreasureHunt(),
-      transition: Transition.fadeIn,
-    ),
   ];
 }

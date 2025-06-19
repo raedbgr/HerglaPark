@@ -127,11 +127,11 @@ class _HomePageState extends State<HomePage> {
       Get.toNamed('/quiz', arguments: {'chestId': chestId});
     } else if (challengeType == 'whack_a_mole') {
       Get.toNamed('/whack_a_mole', arguments: {'chestId': chestId});
-    } else if (challengeType == 'treasure_hunt') {
+    } else if (challengeType == 'card_match') {
       // pass chestId if you need it, or leave empty
-      Get.to(() => const TreasureHunt());
+      Get.to(() => const CardMatch());
       // or with a named route:
-      // Get.toNamed('/treasure_hunt', arguments: {'chestId': chestId});
+      // Get.toNamed('/card_match', arguments: {'chestId': chestId});
     }
 
     if (homeCtrl.currentPosition.value != null) {
@@ -392,10 +392,7 @@ class _MiniGameSelectorDialogState extends State<MiniGameSelectorDialog> with Si
   final List<String> games = [
     'quiz',
     'whack_a_mole',
-    'treasure_hunt',
-    'quiz',
-    'whack_a_mole',
-    'treasure_hunt',
+    'card_match',
   ];
   String selectedGame = '';
   bool isSpinning = true;
@@ -404,7 +401,7 @@ class _MiniGameSelectorDialogState extends State<MiniGameSelectorDialog> with Si
   void initState() {
     super.initState();
 
-    final challenges = ['quiz', 'whack_a_mole', 'treasure_hunt'];
+    final challenges = ['quiz', 'whack_a_mole', 'card_match'];
     selectedGame = challenges[Random().nextInt(challenges.length)];
 
     _scrollController = ScrollController();
@@ -461,8 +458,8 @@ class _MiniGameSelectorDialogState extends State<MiniGameSelectorDialog> with Si
         return 'Quiz';
       case 'whack_a_mole':
         return 'Whack a Mole';
-      case 'treasure_hunt':
-        return 'Treasure Hunt';
+      case 'card_match':
+        return 'Card Match';
       default:
         return game;
     }
