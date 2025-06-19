@@ -489,6 +489,15 @@ class WhackAMoleState extends State<WhackAMole> with TickerProviderStateMixin {
                                         );
                                       },
                                     ),
+                                    // Clip the space below fg_hole.png
+                                    ClipRect(
+                                      clipper: RectClipper(),
+                                      child: Container(
+                                        color: Colors.transparent, // Transparent to show bg_hole.png and mole
+                                        width: double.infinity,
+                                        height: double.infinity,
+                                      ),
+                                    ),
                                     // Foreground hole
                                     Image.asset('assets/images/fg_hole.png'),
                                   ],
@@ -537,3 +546,16 @@ class WhackAMoleState extends State<WhackAMole> with TickerProviderStateMixin {
     );
   }
 }
+
+class RectClipper extends CustomClipper<Rect> {
+  @override
+  Rect getClip(Size size) {
+    // Clip the bottom 20%, show the top 80%
+    return Rect.fromLTRB(0, 0, size.width, size.height * 0.8);
+  }
+
+  @override
+  bool shouldReclip(CustomClipper<Rect> oldClipper) => false;
+}
+
+// TODO: for fixing the mole animation below the foreground hole
