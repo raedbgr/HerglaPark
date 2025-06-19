@@ -125,9 +125,15 @@ class _HomePageState extends State<HomePage> {
   void _navigateToChallenge(BuildContext context, String chestId, String challengeType) {
     if (challengeType == 'quiz') {
       Get.toNamed('/quiz', arguments: {'chestId': chestId});
-    } else {
+    } else if (challengeType == 'whack_a_mole') {
       Get.toNamed('/whack_a_mole', arguments: {'chestId': chestId});
+    } else if (challengeType == 'treasure_hunt') {
+      // pass chestId if you need it, or leave empty
+      Get.to(() => const TreasureHunt());
+      // or with a named route:
+      // Get.toNamed('/treasure_hunt', arguments: {'chestId': chestId});
     }
+
     if (homeCtrl.currentPosition.value != null) {
       homeCtrl.animateToUserLocation(homeCtrl.currentPosition.value!);
     }
@@ -383,7 +389,14 @@ class _MiniGameSelectorDialogState extends State<MiniGameSelectorDialog> with Si
   late AnimationController _controller;
   late Animation<double> _animation;
   late ScrollController _scrollController;
-  final List<String> games = ['quiz', 'whack_a_mole', 'quiz', 'whack_a_mole'];
+  final List<String> games = [
+    'quiz',
+    'whack_a_mole',
+    'treasure_hunt',
+    'quiz',
+    'whack_a_mole',
+    'treasure_hunt',
+  ];
   String selectedGame = '';
   bool isSpinning = true;
 
@@ -391,7 +404,7 @@ class _MiniGameSelectorDialogState extends State<MiniGameSelectorDialog> with Si
   void initState() {
     super.initState();
 
-    final challenges = ['quiz', 'whack_a_mole'];
+    final challenges = ['quiz', 'whack_a_mole', 'treasure_hunt'];
     selectedGame = challenges[Random().nextInt(challenges.length)];
 
     _scrollController = ScrollController();
@@ -443,7 +456,16 @@ class _MiniGameSelectorDialogState extends State<MiniGameSelectorDialog> with Si
   }
 
   String _getDisplayName(String game) {
-    return game == 'quiz' ? 'Quiz' : 'Whack a Mole';
+    switch (game) {
+      case 'quiz':
+        return 'Quiz';
+      case 'whack_a_mole':
+        return 'Whack a Mole';
+      case 'treasure_hunt':
+        return 'Treasure Hunt';
+      default:
+        return game;
+    }
   }
 
   @override
