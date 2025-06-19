@@ -27,6 +27,7 @@ class WhackAMoleState extends State<WhackAMole> with TickerProviderStateMixin {
 
   // Game state
   List<bool> moles = List.generate(9, (_) => false); // Mole visibility
+  List<bool> _isTapped = List.generate(9, (_) => false); // Tap effect state
   int score = 0; // Current score
   int timeLeft = 30; // Time remaining
   bool isGameOver = false; // Game over flag
@@ -107,6 +108,7 @@ class WhackAMoleState extends State<WhackAMole> with TickerProviderStateMixin {
       timeLeft = gameDuration;
       isGameOver = false;
       moles = List.generate(totalHoles, (_) => false);
+      _isTapped = List.generate(totalHoles, (_) => false);
     });
 
     gameTimer = Timer.periodic(Duration(seconds: 1), (timer) {
@@ -154,12 +156,19 @@ class WhackAMoleState extends State<WhackAMole> with TickerProviderStateMixin {
     if (moles[index] && !isGameOver && mounted) {
       setState(() {
         moles[index] = false;
+        _isTapped[index] = true; // Trigger tap effect
         score++;
         if (score >= scoreToWin) {
           endGame(true);
         }
       });
       _moleControllers[index].reverse(); // Animate mole down when hit
+      // Reset tap effect after animation duration
+      Future.delayed(Duration(milliseconds: 100), () {
+        if (mounted) {
+          setState(() => _isTapped[index] = false);
+        }
+      });
     }
   }
 
@@ -472,7 +481,7 @@ class WhackAMoleState extends State<WhackAMole> with TickerProviderStateMixin {
                                   children: [
                                     // Background hole
                                     Image.asset('assets/images/bg_hole.png'),
-                                    // Mole (animated)
+                                    // Mole (animated with clipping)
                                     AnimatedBuilder(
                                       animation: _moleAnimations[index],
                                       builder: (context, child) {
@@ -480,26 +489,37 @@ class WhackAMoleState extends State<WhackAMole> with TickerProviderStateMixin {
                                           top: moles[index] ? _moleAnimations[index].value : 60.0,
                                           child: Visibility(
                                             visible: moles[index],
-                                            child: SizedBox(
-                                              width: 100,
-                                              height: 100,
-                                              child: Image.asset('assets/images/char_normal_mole.png'),
+                                            child: ClipRect(
+                                              clipper: MoleArea(),
+                                              child: SizedBox(
+                                                width: 120,
+                                                height: 120,
+                                                child: Image.asset('assets/images/char_normal_mole.png'),
+                                              ),
                                             ),
                                           ),
                                         );
                                       },
                                     ),
-                                    // Clip the space below fg_hole.png
-                                    ClipRect(
-                                      clipper: RectClipper(),
-                                      child: Container(
-                                        color: Colors.transparent, // Transparent to show bg_hole.png and mole
-                                        width: double.infinity,
-                                        height: double.infinity,
-                                      ),
-                                    ),
                                     // Foreground hole
                                     Image.asset('assets/images/fg_hole.png'),
+                                    // Tap effect
+                                    if (_isTapped[index])
+                                      TweenAnimationBuilder(
+                                        tween: Tween(begin: 0.0, end: 1.0),
+                                        duration: const Duration(milliseconds: 100),
+                                        builder: (_, value, child) {
+                                          return Transform.scale(
+                                            scale: value,
+                                            child: child,
+                                          );
+                                        },
+                                        child: SizedBox(
+                                          width: 120,
+                                          height: 120,
+                                          child: Image.asset('assets/images/fx_normal.png'),
+                                        ),
+                                      ),
                                   ],
                                 ),
                               ),
@@ -547,15 +567,13 @@ class WhackAMoleState extends State<WhackAMole> with TickerProviderStateMixin {
   }
 }
 
-class RectClipper extends CustomClipper<Rect> {
+class MoleArea extends CustomClipper<Rect> {
   @override
   Rect getClip(Size size) {
-    // Clip the bottom 20%, show the top 80%
-    return Rect.fromLTRB(0, 0, size.width, size.height * 0.8);
+    // Clip the bottom 35%, show the top 65%
+    return Rect.fromLTRB(0, 0, size.width, size.height * 0.65);
   }
 
   @override
-  bool shouldReclip(CustomClipper<Rect> oldClipper) => false;
+  bool shouldReclip(covariant CustomClipper<Rect> oldClipper) => false;
 }
-
-// TODO: for fixing the mole animation below the foreground hole
