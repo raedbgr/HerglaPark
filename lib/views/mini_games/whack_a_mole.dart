@@ -282,104 +282,105 @@ class WhackAMoleState extends State<WhackAMole> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Whack-a-Mole Challenge')),
-      body: Stack(
-        children: [
-          Column(
-            children: [
-              Padding(
-                padding: EdgeInsets.all(20),
-                child: Text('Score: $score / $scoreToWin', style: TextStyle(fontSize: 16)),
-              ),
-              LinearProgressIndicator(
-                value: timeLeft / gameDuration,
-                backgroundColor: Colors.grey[300],
-                color: timeLeft > 10 ? Colors.green : Colors.red,
-              ),
-              Padding(
-                padding: EdgeInsets.symmetric(vertical: 5),
-                child: Text('$timeLeft seconds left', style: TextStyle(color: timeLeft > 10 ? Colors.green : Colors.red)),
-              ),
-              Expanded(
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final moleSize = constraints.maxWidth / gridSize - 10;
-                    return Wrap(
-                      spacing: 10,
-                      runSpacing: 10,
-                      alignment: WrapAlignment.center,
-                      children: List.generate(totalHoles, (index) {
-                        return GestureDetector(
-                          onTap: () => hitMole(index),
-                          child: SizedBox(
-                            width: moleSize,
-                            height: moleSize,
-                            child: Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                Positioned.fill(child: Image.asset('assets/images/bg_hole.png')),
-                                if (moles[index])
-                                  TweenAnimationBuilder<double>(
-                                    tween: Tween(begin: 60.0, end: 10.0),
-                                    duration: const Duration(milliseconds: 300),
-                                    builder: (_, value, child) {
-                                      return Positioned(
-                                        top: value,
-                                        child: ClipRect(
-                                          clipper: MoleArea(),
-                                          child: SizedBox(
-                                            width: moleSize,
-                                            height: moleSize,
-                                            child: Image.asset('assets/images/char_normal_mole.png'),
+      body: SafeArea(
+        child: Stack(
+          children: [
+            Column(
+              children: [
+                Padding(
+                  padding: EdgeInsets.all(20),
+                  child: Text('Score: $score / $scoreToWin', style: TextStyle(fontSize: 16)),
+                ),
+                LinearProgressIndicator(
+                  value: timeLeft / gameDuration,
+                  backgroundColor: Colors.grey[300],
+                  color: timeLeft > 10 ? Colors.green : Colors.red,
+                ),
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: 5),
+                  child: Text('$timeLeft seconds left', style: TextStyle(color: timeLeft > 10 ? Colors.green : Colors.red)),
+                ),
+                Expanded(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final moleSize = constraints.maxWidth / gridSize - 10;
+                      return Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        alignment: WrapAlignment.center,
+                        children: List.generate(totalHoles, (index) {
+                          return GestureDetector(
+                            onTap: () => hitMole(index),
+                            child: SizedBox(
+                              width: moleSize,
+                              height: moleSize,
+                              child: Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  Positioned.fill(child: Image.asset('assets/images/bg_hole.png')),
+                                  if (moles[index])
+                                    TweenAnimationBuilder<double>(
+                                      tween: Tween(begin: 60.0, end: 10.0),
+                                      duration: const Duration(milliseconds: 300),
+                                      builder: (_, value, child) {
+                                        return Positioned(
+                                          top: value,
+                                          child: ClipRect(
+                                            clipper: MoleArea(),
+                                            child: SizedBox(
+                                              width: moleSize,
+                                              height: moleSize,
+                                              child: Image.asset('assets/images/char_normal_mole.png'),
+                                            ),
                                           ),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                Positioned.fill(child: Image.asset('assets/images/fg_hole.png')),
-                                if (_isTapped[index])
-                                  TweenAnimationBuilder(
-                                    tween: Tween(begin: 0.0, end: 1.0),
-                                    duration: const Duration(milliseconds: 200),
-                                    builder: (_, value, child) => Opacity(
-                                      opacity: value,
-                                      child: Transform.scale(scale: value, child: child),
+                                        );
+                                      },
                                     ),
-                                    child: Image.asset('assets/images/fx_normal.png'),
-                                  ),
-                              ],
+                                  Positioned.fill(child: Image.asset('assets/images/fg_hole.png')),
+                                  if (_isTapped[index])
+                                    TweenAnimationBuilder(
+                                      tween: Tween(begin: 0.0, end: 1.0),
+                                      duration: const Duration(milliseconds: 200),
+                                      builder: (_, value, child) => Opacity(
+                                        opacity: value,
+                                        child: Transform.scale(scale: value, child: child),
+                                      ),
+                                      child: Image.asset('assets/images/fx_normal.png'),
+                                    ),
+                                ],
+                              ),
                             ),
-                          ),
-                        );
-                      }),
-                    );
-                  },
+                          );
+                        }),
+                      );
+                    },
+                  ),
                 ),
-              ),
-            ],
-          ),
-          if (isCountingDown)
-            Container(
-              color: Colors.black54,
-              child: Center(
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    SizedBox(
-                      width: 100,
-                      height: 100,
-                      child: CircularProgressIndicator(
-                        value: countdown / 3,
-                        strokeWidth: 8,
-                        color: Colors.white,
-                      ),
-                    ),
-                    Text('$countdown', style: TextStyle(fontSize: 48, color: Colors.white, fontWeight: FontWeight.bold)),
-                  ],
-                ),
-              ),
+              ],
             ),
-        ],
+            if (isCountingDown)
+              Container(
+                color: Colors.black54,
+                child: Center(
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      SizedBox(
+                        width: 100,
+                        height: 100,
+                        child: CircularProgressIndicator(
+                          value: countdown / 3,
+                          strokeWidth: 8,
+                          color: Colors.white,
+                        ),
+                      ),
+                      Text('$countdown', style: TextStyle(fontSize: 48, color: Colors.white, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
