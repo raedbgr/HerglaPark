@@ -13,76 +13,37 @@ class WhackAMole extends StatefulWidget {
 }
 
 class WhackAMoleState extends State<WhackAMole> with TickerProviderStateMixin {
-  late AnimationController _animationController;
-  late Animation<double> _animation;
-
-  // Game constants
-  final int gridSize = 3; // 3x3 grid
+  final int gridSize = 3;
   final int totalHoles = 9;
-  final int gameDuration = 30; // 30 seconds
-  final int scoreToWin = 20; // Points needed to win
-  final int moleStayTime = 1000; // 1 second per mole
-  final int minInterval = 1000; // Min 1 second between moles
-  final int maxInterval = 2000; // Max 2 seconds between moles
+  final int gameDuration = 30;
+  final int scoreToWin = 20;
+  final int moleStayTime = 1000;
+  final int minInterval = 1000;
+  final int maxInterval = 2000;
 
-  // Game state
-  List<bool> moles = List.generate(9, (_) => false); // Mole visibility
-  List<bool> _isTapped = List.generate(9, (_) => false); // Tap effect state
-  int score = 0; // Current score
-  int timeLeft = 30; // Time remaining
-  bool isGameOver = false; // Game over flag
+  List<bool> moles = List.generate(9, (_) => false);
+  List<bool> _isTapped = List.generate(9, (_) => false);
+  int score = 0;
+  int timeLeft = 30;
+  bool isGameOver = false;
   Timer? gameTimer;
   Timer? moleTimer;
 
-  // Countdown state
-  int countdown = 3; // Start at 3
-  bool isCountingDown = true; // Countdown active
+  int countdown = 3;
+  bool isCountingDown = true;
   Timer? countdownTimer;
-
-  // Mole animation controllers (one per hole)
-  List<AnimationController> _moleControllers = [];
-  List<Animation<double>> _moleAnimations = [];
 
   @override
   void initState() {
     super.initState();
-
-    // Setup page animation
-    _animationController = AnimationController(
-      vsync: this,
-      duration: Duration(milliseconds: 500),
-    );
-    _animation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
-    );
-    _animationController.forward();
-
-    // Setup mole animations (one controller per hole)
-    for (int i = 0; i < totalHoles; i++) {
-      final controller = AnimationController(
-        vsync: this,
-        duration: Duration(milliseconds: 300),
-      );
-      final animation = Tween<double>(begin: 60.0, end: 10.0).animate(
-        CurvedAnimation(parent: controller, curve: Curves.easeInOut),
-      );
-      _moleControllers.add(controller);
-      _moleAnimations.add(animation);
-    }
-
-    // Start countdown
     startCountdown();
   }
 
   @override
   void dispose() {
-    _animationController.dispose();
     gameTimer?.cancel();
     moleTimer?.cancel();
     countdownTimer?.cancel();
-    for (var controller in _moleControllers) {
-      controller.dispose();
-    }
     super.dispose();
   }
 
@@ -135,15 +96,11 @@ class WhackAMoleState extends State<WhackAMole> with TickerProviderStateMixin {
       setState(() {
         moles[holeIndex] = true;
       });
-      _moleControllers[holeIndex].forward(); // Animate mole up
     }
 
     Timer(Duration(milliseconds: moleStayTime), () {
-      if (moles[holeIndex] && mounted) {
-        setState(() {
-          moles[holeIndex] = false;
-        });
-        _moleControllers[holeIndex].reverse(); // Animate mole down
+      if (mounted) {
+        setState(() => moles[holeIndex] = false);
       }
     });
 
@@ -152,39 +109,27 @@ class WhackAMoleState extends State<WhackAMole> with TickerProviderStateMixin {
   }
 
   void hitMole(int index) {
-    if (isCountingDown) return;
-    if (moles[index] && !isGameOver && mounted) {
-      setState(() {
-        moles[index] = false;
-        _isTapped[index] = true; // Trigger tap effect
-        score++;
-        if (score >= scoreToWin) {
-          endGame(true);
-        }
-      });
-      _moleControllers[index].reverse(); // Animate mole down when hit
-      // Reset tap effect after animation duration
-      Future.delayed(Duration(milliseconds: 100), () {
-        if (mounted) {
-          setState(() => _isTapped[index] = false);
-        }
-      });
-    }
+    if (isCountingDown || isGameOver || !moles[index]) return;
+
+    setState(() {
+      moles[index] = false;
+      _isTapped[index] = true;
+      score++;
+      if (score >= scoreToWin) endGame(true);
+    });
+
+    Future.delayed(Duration(milliseconds: 200), () {
+      if (mounted) setState(() => _isTapped[index] = false);
+    });
   }
 
   void endGame(bool won) {
     if (mounted) {
-      setState(() {
-        isGameOver = true;
-      });
+      setState(() => isGameOver = true);
     }
     gameTimer?.cancel();
     moleTimer?.cancel();
-    if (won) {
-      handleSuccess();
-    } else {
-      handleFailure("Time's up or not enough points!");
-    }
+    won ? handleSuccess() : handleFailure("Time's up or not enough points!");
   }
 
   void handleSuccess() {
@@ -211,17 +156,10 @@ class WhackAMoleState extends State<WhackAMole> with TickerProviderStateMixin {
           FirebaseFirestore.instance.collection('bonus').doc(bonusId).set(bonus.toJson());
 
           FirebaseFirestore.instance.collection('users').doc(userId).get().then((userDoc) {
-            if (userDoc.exists) {
-              final userData = userDoc.data() as Map<String, dynamic>;
-              final int currentCount = userData['chestsOpened'] ?? 0;
-              FirebaseFirestore.instance.collection('users').doc(userId).update({
-                'chestsOpened': currentCount + 1,
-              });
-            } else {
-              FirebaseFirestore.instance.collection('users').doc(userId).set({
-                'chestsOpened': 1,
-              });
-            }
+            final currentCount = userDoc.exists ? (userDoc.data()?['chestsOpened'] ?? 0) : 0;
+            FirebaseFirestore.instance.collection('users').doc(userId).set({
+              'chestsOpened': currentCount + 1,
+            }, SetOptions(merge: true));
           });
 
           showDialog(
@@ -229,68 +167,34 @@ class WhackAMoleState extends State<WhackAMole> with TickerProviderStateMixin {
             barrierDismissible: false,
             builder: (context) => Dialog(
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              child: Container(
+              child: Padding(
                 padding: EdgeInsets.all(20),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Container(
-                      width: 100,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.amber.withOpacity(0.2),
-                      ),
-                      child: Icon(
-                        Icons.emoji_events,
-                        size: 60,
-                        color: Colors.amber,
-                      ),
+                    CircleAvatar(
+                      radius: 50,
+                      backgroundColor: Colors.amber.withOpacity(0.2),
+                      child: Icon(Icons.emoji_events, size: 60, color: Colors.amber),
                     ),
                     SizedBox(height: 20),
-                    Text(
-                      'Congratulations!',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    Text('Congratulations!', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                     SizedBox(height: 10),
-                    Text(
-                      'You have successfully opened the chest!',
-                      textAlign: TextAlign.center,
-                    ),
+                    Text('You have successfully opened the chest!', textAlign: TextAlign.center),
                     SizedBox(height: 20),
                     Container(
                       padding: EdgeInsets.all(15),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[100],
-                        borderRadius: BorderRadius.circular(10),
-                      ),
+                      decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(10)),
                       child: Column(
                         children: [
-                          Text(
-                            'You\'ve earned:',
-                            style: TextStyle(fontSize: 16),
-                          ),
+                          Text('You\'ve earned:', style: TextStyle(fontSize: 16)),
                           SizedBox(height: 10),
                           Text(
                             _getBonusTypeDescription(bonusType),
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: _getBonusTypeColor(bonusType),
-                            ),
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: _getBonusTypeColor(bonusType)),
                           ),
                           SizedBox(height: 5),
-                          Text(
-                            'Check your profile to use your reward!',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[600],
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
+                          Text('Check your profile to use your reward!', style: TextStyle(fontSize: 14, color: Colors.grey[600]), textAlign: TextAlign.center),
                         ],
                       ),
                     ),
@@ -299,22 +203,13 @@ class WhackAMoleState extends State<WhackAMole> with TickerProviderStateMixin {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _getBonusTypeColor(bonusType),
                         minimumSize: Size(double.infinity, 50),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       ),
                       onPressed: () {
                         Navigator.of(context).pop();
                         Get.back();
                       },
-                      child: Text(
-                        'Awesome!',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      child: Text('Awesome!', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),
@@ -338,9 +233,7 @@ class WhackAMoleState extends State<WhackAMole> with TickerProviderStateMixin {
           content: Text('$reason You can try again in 5 minutes.'),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
+              onPressed: () => Navigator.of(context).pop(),
               child: Text('OK'),
             ),
           ],
@@ -357,12 +250,7 @@ class WhackAMoleState extends State<WhackAMole> with TickerProviderStateMixin {
   }
 
   String _generateRandomNumericString(int length) {
-    final random = Random();
-    final buffer = StringBuffer();
-    for (var i = 0; i < length; i++) {
-      buffer.write(random.nextInt(10).toString());
-    }
-    return buffer.toString();
+    return List.generate(length, (_) => Random().nextInt(10)).join();
   }
 
   String _getBonusTypeDescription(String bonusType) {
@@ -393,186 +281,113 @@ class WhackAMoleState extends State<WhackAMole> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _animation,
-      builder: (context, child) {
-        return Scaffold(
-          appBar: AppBar(
-            title: Text('Whack-a-Mole Challenge'),
-            automaticallyImplyLeading: true,
-          ),
-          body: Opacity(
-            opacity: _animation.value,
-            child: Stack(
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Container(
-                      padding: EdgeInsets.all(20),
-                      child: Column(
-                        children: [
-                          Text(
-                            'Score: $score/$scoreToWin',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      margin: EdgeInsets.symmetric(horizontal: 20),
-                      height: 10,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(5),
-                        color: Colors.grey[200],
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            flex: timeLeft,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(5),
-                                color: timeLeft > 10 ? Colors.green : Colors.red,
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            flex: gameDuration - timeLeft,
-                            child: Container(),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      alignment: Alignment.centerRight,
-                      padding: EdgeInsets.only(right: 20, top: 5),
-                      child: Text(
-                        '$timeLeft seconds left',
-                        style: TextStyle(
-                          color: timeLeft > 10 ? Colors.green : Colors.red,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: Padding(
-                        padding: EdgeInsets.all(20),
-                        child: GridView.builder(
-                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: gridSize,
-                            crossAxisSpacing: 10,
-                            mainAxisSpacing: 10,
-                          ),
-                          itemCount: totalHoles,
-                          itemBuilder: (context, index) {
-                            return GestureDetector(
-                              onTap: () => hitMole(index),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  border: Border.all(color: Colors.black),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Stack(
-                                  alignment: Alignment.center,
-                                  children: [
-                                    // Background hole
-                                    Image.asset('assets/images/bg_hole.png'),
-                                    // Mole (animated with clipping)
-                                    AnimatedBuilder(
-                                      animation: _moleAnimations[index],
-                                      builder: (context, child) {
-                                        return Positioned(
-                                          top: moles[index] ? _moleAnimations[index].value : 60.0,
-                                          child: Visibility(
-                                            visible: moles[index],
-                                            child: ClipRect(
-                                              clipper: MoleArea(),
-                                              child: SizedBox(
-                                                width: 120,
-                                                height: 120,
-                                                child: Image.asset('assets/images/char_normal_mole.png'),
-                                              ),
-                                            ),
+    return Scaffold(
+      appBar: AppBar(title: Text('Whack-a-Mole Challenge')),
+      body: Stack(
+        children: [
+          Column(
+            children: [
+              Padding(
+                padding: EdgeInsets.all(20),
+                child: Text('Score: $score / $scoreToWin', style: TextStyle(fontSize: 16)),
+              ),
+              LinearProgressIndicator(
+                value: timeLeft / gameDuration,
+                backgroundColor: Colors.grey[300],
+                color: timeLeft > 10 ? Colors.green : Colors.red,
+              ),
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: 5),
+                child: Text('$timeLeft seconds left', style: TextStyle(color: timeLeft > 10 ? Colors.green : Colors.red)),
+              ),
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final moleSize = constraints.maxWidth / gridSize - 10;
+                    return Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      alignment: WrapAlignment.center,
+                      children: List.generate(totalHoles, (index) {
+                        return GestureDetector(
+                          onTap: () => hitMole(index),
+                          child: SizedBox(
+                            width: moleSize,
+                            height: moleSize,
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                Positioned.fill(child: Image.asset('assets/images/bg_hole.png')),
+                                if (moles[index])
+                                  TweenAnimationBuilder<double>(
+                                    tween: Tween(begin: 60.0, end: 10.0),
+                                    duration: const Duration(milliseconds: 300),
+                                    builder: (_, value, child) {
+                                      return Positioned(
+                                        top: value,
+                                        child: ClipRect(
+                                          clipper: MoleArea(),
+                                          child: SizedBox(
+                                            width: moleSize,
+                                            height: moleSize,
+                                            child: Image.asset('assets/images/char_normal_mole.png'),
                                           ),
-                                        );
-                                      },
-                                    ),
-                                    // Foreground hole
-                                    Image.asset('assets/images/fg_hole.png'),
-                                    // Tap effect
-                                    if (_isTapped[index])
-                                      TweenAnimationBuilder(
-                                        tween: Tween(begin: 0.0, end: 1.0),
-                                        duration: const Duration(milliseconds: 100),
-                                        builder: (_, value, child) {
-                                          return Transform.scale(
-                                            scale: value,
-                                            child: child,
-                                          );
-                                        },
-                                        child: SizedBox(
-                                          width: 120,
-                                          height: 120,
-                                          child: Image.asset('assets/images/fx_normal.png'),
                                         ),
-                                      ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        ),
+                                      );
+                                    },
+                                  ),
+                                Positioned.fill(child: Image.asset('assets/images/fg_hole.png')),
+                                if (_isTapped[index])
+                                  TweenAnimationBuilder(
+                                    tween: Tween(begin: 0.0, end: 1.0),
+                                    duration: const Duration(milliseconds: 200),
+                                    builder: (_, value, child) => Opacity(
+                                      opacity: value,
+                                      child: Transform.scale(scale: value, child: child),
+                                    ),
+                                    child: Image.asset('assets/images/fx_normal.png'),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+          if (isCountingDown)
+            Container(
+              color: Colors.black54,
+              child: Center(
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    SizedBox(
+                      width: 100,
+                      height: 100,
+                      child: CircularProgressIndicator(
+                        value: countdown / 3,
+                        strokeWidth: 8,
+                        color: Colors.white,
                       ),
                     ),
+                    Text('$countdown', style: TextStyle(fontSize: 48, color: Colors.white, fontWeight: FontWeight.bold)),
                   ],
                 ),
-                if (isCountingDown)
-                  Container(
-                    color: Colors.black54,
-                    child: Center(
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          SizedBox(
-                            width: 100,
-                            height: 100,
-                            child: CircularProgressIndicator(
-                              value: countdown / 3,
-                              strokeWidth: 8,
-                              color: Colors.white,
-                            ),
-                          ),
-                          Text(
-                            '$countdown',
-                            style: TextStyle(
-                              fontSize: 48,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-              ],
+              ),
             ),
-          ),
-        );
-      },
+        ],
+      ),
     );
   }
 }
 
 class MoleArea extends CustomClipper<Rect> {
   @override
-  Rect getClip(Size size) {
-    // Clip the bottom 35%, show the top 65%
-    return Rect.fromLTRB(0, 0, size.width, size.height * 0.65);
-  }
+  Rect getClip(Size size) => Rect.fromLTRB(0, 0, size.width, size.height * 0.65);
 
   @override
   bool shouldReclip(covariant CustomClipper<Rect> oldClipper) => false;
