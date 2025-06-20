@@ -23,5 +23,12 @@ class Routes {
       ),
       transition: Transition.fadeIn,
     ),
+    GetPage(
+      name: '/card_match',
+      page: () => CardMatch(
+        chestId: Get.arguments['chestId'] as String,
+      ),
+      transition: Transition.fadeIn,
+    ),
   ];
 }

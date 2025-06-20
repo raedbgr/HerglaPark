@@ -127,11 +127,8 @@ class _HomePageState extends State<HomePage> {
       Get.toNamed('/quiz', arguments: {'chestId': chestId});
     } else if (challengeType == 'whack_a_mole') {
       Get.toNamed('/whack_a_mole', arguments: {'chestId': chestId});
-    } else if (challengeType == 'card_match') {
-      // pass chestId if you need it, or leave empty
-      Get.to(() => const CardMatch());
-      // or with a named route:
-      // Get.toNamed('/card_match', arguments: {'chestId': chestId});
+    } else {
+      Get.toNamed('/card_match', arguments: {'chestId': chestId});
     }
 
     if (homeCtrl.currentPosition.value != null) {
@@ -545,7 +542,7 @@ class _MiniGameSelectorDialogState extends State<MiniGameSelectorDialog> with Si
                       height: 2,
                       color: Colors.black87,
                     ),
-                    SizedBox(height: 56),
+                    SizedBox(height: 50),
                     Container(
                       width: 180,
                       height: 2,
