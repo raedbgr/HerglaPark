@@ -16,7 +16,7 @@ class _CardMatchState extends State<CardMatch> with TickerProviderStateMixin {
   // Game constants
   final int gridSize = 4; // 4x4 grid
   final int totalCards = 16; // 16 cards (8 pairs)
-  final int gameDuration = 60; // 60 seconds
+  final int gameDuration = 30; // 30 seconds
   final int pairsToWin = 8; // 8 pairs to match
   final Duration flipDuration = Duration(milliseconds: 300); // Flip animation
 
@@ -26,7 +26,7 @@ class _CardMatchState extends State<CardMatch> with TickerProviderStateMixin {
   List<bool> cardMatched = []; // Is card matched?
   List<int> flippedCards = []; // Indices of currently flipped cards
   int pairsMatched = 0; // Number of pairs matched
-  int timeLeft = 60; // Time remaining
+  int timeLeft = 30; // Time remaining
   bool isGameOver = false; // Game over flag
   bool isFlipping = false; // Prevent taps during flip animation
   Timer? gameTimer;
@@ -478,12 +478,12 @@ class _CardMatchState extends State<CardMatch> with TickerProviderStateMixin {
                                     Opacity(
                                       opacity: cardFaceUp[index] || cardMatched[index] ? 1.0 : 0.0,
                                       child: Container(
-                                        color: Colors.white,
+                                        color: themeCtrl.primaryColor,
                                         child: Center(
                                           child: Icon(
                                             cardIcons[index],
                                             size: 40,
-                                            color: Colors.blue,
+                                            color: themeCtrl.secondaryColor,
                                           ),
                                         ),
                                       ),
