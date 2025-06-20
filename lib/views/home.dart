@@ -123,14 +123,45 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _navigateToChallenge(BuildContext context, String chestId, String challengeType) {
-    if (challengeType == 'quiz') {
-      Get.toNamed('/quiz', arguments: {'chestId': chestId});
-    } else if (challengeType == 'whack_a_mole') {
-      Get.toNamed('/whack_a_mole', arguments: {'chestId': chestId});
-    } else {
-      Get.toNamed('/card_match', arguments: {'chestId': chestId});
+    // if (challengeType == 'quiz') {
+    //   Get.toNamed('/quiz', arguments: {'chestId': chestId});
+    // } else if (challengeType == 'whack_a_mole') {
+    //   Get.toNamed('/whack_a_mole', arguments: {'chestId': chestId});
+    // } else if (challengeType == 'card_match') {
+    //   Get.toNamed('/card_match', arguments: {'chestId': chestId});
+    // } else {
+    //   Get.toNamed('/slide_puzzle', arguments: {'chestId': chestId});
+    // }
+    switch (challengeType) {
+      case 'quiz':
+        Get.toNamed('/quiz', arguments: {'chestId': chestId});
+        break;
+      case 'whack_a_mole':
+        Get.toNamed('/whack_a_mole', arguments: {'chestId': chestId});
+        break;
+      case 'card_match':
+        Get.toNamed('/card_match', arguments: {'chestId': chestId});
+        break;
+      case 'slide_puzzle':
+        Get.toNamed('/slide_puzzle', arguments: {'chestId': chestId});
+        break;
+      default:
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text('Error'),
+            content: Text('Invalid challenge type: $challengeType'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text('OK'),
+              ),
+            ],
+          ),
+        );
+        return;
     }
-
+    // leave this as is
     if (homeCtrl.currentPosition.value != null) {
       homeCtrl.animateToUserLocation(homeCtrl.currentPosition.value!);
     }
@@ -390,6 +421,7 @@ class _MiniGameSelectorDialogState extends State<MiniGameSelectorDialog> with Si
     'quiz',
     'whack_a_mole',
     'card_match',
+    'slide_puzzle',
   ];
   String selectedGame = '';
   bool isSpinning = true;
@@ -398,7 +430,7 @@ class _MiniGameSelectorDialogState extends State<MiniGameSelectorDialog> with Si
   void initState() {
     super.initState();
 
-    final challenges = ['quiz', 'whack_a_mole', 'card_match'];
+    final challenges = ['quiz', 'whack_a_mole', 'card_match', 'slide_puzzle'];
     selectedGame = challenges[Random().nextInt(challenges.length)];
 
     _scrollController = ScrollController();
@@ -457,6 +489,8 @@ class _MiniGameSelectorDialogState extends State<MiniGameSelectorDialog> with Si
         return 'Whack a Mole';
       case 'card_match':
         return 'Card Match';
+      case 'slide_puzzle':
+        return 'Slide Puzzle';
       default:
         return game;
     }

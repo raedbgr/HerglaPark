@@ -30,5 +30,12 @@ class Routes {
       ),
       transition: Transition.fadeIn,
     ),
+    GetPage(
+      name: '/slide_puzzle',
+      page: () => SlidePuzzle(
+        chestId: Get.arguments['chestId'] as String,
+      ),
+      transition: Transition.fadeIn,
+    ),
   ];
 }
