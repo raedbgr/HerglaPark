@@ -1,7 +1,4 @@
 import '/imports.dart';
-import 'dart:async';
-import 'dart:math';
-import 'package:flutter/material.dart';
 
 class WhackAMole extends StatefulWidget {
   final String chestId;
@@ -23,6 +20,7 @@ class WhackAMoleState extends State<WhackAMole> with TickerProviderStateMixin {
 
   List<bool> moles = List.generate(9, (_) => false);
   List<bool> _isTapped = List.generate(9, (_) => false);
+  List<bool> _isMissed = List.generate(9, (_) => false); // New list for missed taps
   int score = 0;
   int timeLeft = 30;
   bool isGameOver = false;
@@ -70,6 +68,7 @@ class WhackAMoleState extends State<WhackAMole> with TickerProviderStateMixin {
       isGameOver = false;
       moles = List.generate(totalHoles, (_) => false);
       _isTapped = List.generate(totalHoles, (_) => false);
+      _isMissed = List.generate(totalHoles, (_) => false);
     });
 
     gameTimer = Timer.periodic(Duration(seconds: 1), (timer) {
@@ -109,18 +108,28 @@ class WhackAMoleState extends State<WhackAMole> with TickerProviderStateMixin {
   }
 
   void hitMole(int index) {
-    if (isCountingDown || isGameOver || !moles[index]) return;
+    if (isCountingDown || isGameOver) return;
 
-    setState(() {
-      moles[index] = false;
-      _isTapped[index] = true;
-      score++;
-      if (score >= scoreToWin) endGame(true);
-    });
+    if (moles[index]) {
+      setState(() {
+        moles[index] = false;
+        _isTapped[index] = true;
+        score++;
+        if (score >= scoreToWin) endGame(true);
+      });
 
-    Future.delayed(Duration(milliseconds: 200), () {
-      if (mounted) setState(() => _isTapped[index] = false);
-    });
+      Future.delayed(Duration(milliseconds: 700), () {
+        if (mounted) setState(() => _isTapped[index] = false);
+      });
+    } else {
+      setState(() {
+        _isMissed[index] = true;
+      });
+
+      Future.delayed(Duration(milliseconds: 700), () {
+        if (mounted) setState(() => _isMissed[index] = false);
+      });
+    }
   }
 
   void endGame(bool won) {
@@ -351,9 +360,25 @@ class WhackAMoleState extends State<WhackAMole> with TickerProviderStateMixin {
                                     duration: const Duration(milliseconds: 200),
                                     builder: (_, value, child) => Opacity(
                                       opacity: value,
-                                      child: Transform.scale(scale: value, child: child),
+                                      child: Transform.scale(
+                                        scale: value,
+                                        child: child,
+                                      ),
                                     ),
                                     child: Image.asset('assets/images/fx_normal.png'),
+                                  ),
+                                if (_isMissed[index])
+                                  TweenAnimationBuilder(
+                                    tween: Tween(begin: 0.0, end: 1.0),
+                                    duration: const Duration(milliseconds: 200),
+                                    builder: (_, value, child) => Opacity(
+                                      opacity: value,
+                                      child: Transform.scale(
+                                        scale: value,
+                                        child: child,
+                                      ),
+                                    ),
+                                    child: Image.asset('assets/images/fx_none.png'),
                                   ),
                               ],
                             ),

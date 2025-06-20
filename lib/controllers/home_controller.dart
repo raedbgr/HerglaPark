@@ -6,7 +6,7 @@ class HomeController extends GetxController {
   // Observable variables for user's current location
   final Rx<Position?> currentPosition = Rx<Position?>(null);
   final RxBool isLocationServiceEnabled = false.obs;
-  final RxDouble proximityThreshold = 20.0.obs;
+  final RxDouble proximityThreshold = 25.0.obs;
 
   final CameraPosition initialPosition = CameraPosition(
     target: const LatLng(36.0251, 10.4901), // Default position
