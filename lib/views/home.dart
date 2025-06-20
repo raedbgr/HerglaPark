@@ -264,15 +264,15 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
-          Positioned(
-            bottom: 16,
-            right: 16,
-            child: FloatingActionButton(
-              heroTag: "addChestBtn",
-              onPressed: _chestIcon != null ? () => generateRandomChests(5) : null,
-              child: Icon(Icons.add),
-            ),
-          ),
+          // Positioned(
+          //   bottom: 16,
+          //   right: 16,
+          //   child: FloatingActionButton(
+          //     heroTag: "addChestBtn",
+          //     onPressed: _chestIcon != null ? () => generateRandomChests(5) : null,
+          //     child: Icon(Icons.add),
+          //   ),
+          // ),
           Positioned(
             top: 80,
             left: 16,
