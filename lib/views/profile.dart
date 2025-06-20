@@ -404,92 +404,104 @@ class _ProfilePageState extends State<ProfilePage> {
   void _showBonusDetails(Bonus bonus) {
     showDialog(
       context: context,
-      builder:
-          (context) => Dialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Container(
-              padding: EdgeInsets.all(20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    _getBonusIcon(bonus.type ?? ''),
-                    size: 60,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Container(
+          padding: EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                _getBonusIcon(bonus.type ?? ''),
+                size: 60,
+                color: _getBonusColor(bonus.type ?? ''),
+              ),
+              SizedBox(height: 20),
+              Text(
+                _getBonusName(bonus.type ?? ''),
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 20),
+              Container(
+                padding: EdgeInsets.all(15),
+                decoration: BoxDecoration(
+                  color: themeCtrl.backgroundColor,
+                  borderRadius: BorderRadius.circular(15),
+                  border: Border.all(
                     color: _getBonusColor(bonus.type ?? ''),
+                    width: 2,
                   ),
-                  SizedBox(height: 20),
-                  Text(
-                    _getBonusName(bonus.type ?? ''),
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 20),
-                  Container(
-                    padding: EdgeInsets.all(15),
-                    decoration: BoxDecoration(
-                      color: themeCtrl.backgroundColor,
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    child: Column(
-                      children: [
-                        Text(
-                          'QR Code',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        SizedBox(height: 10),
-                        Text(
-                          bonus.qrCode ?? 'No QR Code',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                        SizedBox(height: 5),
-                        Text(
-                          'Show this code to the park staff',
-                          style: TextStyle(fontSize: 14, color: Colors.grey),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 15),
-                  Text(
-                    'Expires on: ${_formatDate(bonus.expiresAt)}',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: themeCtrl.secondaryColor,
-                    ),
-                  ),
-                  SizedBox(height: 20),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: themeCtrl.primaryColor,
-                      minimumSize: Size(double.infinity, 50),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                    ),
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    child: Text(
-                      'Close',
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      'QR Code',
                       style: TextStyle(
                         fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: themeCtrl.textColor,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
-                  ),
-                ],
+                    SizedBox(height: 10),
+                    bonus.qrCode != null && bonus.qrCode!.isNotEmpty
+                        ? QrImageView(
+                      data: bonus.qrCode!,
+                      version: QrVersions.auto,
+                      size: 150.0,
+                      gapless: false,
+                      errorCorrectionLevel: QrErrorCorrectLevel.M,
+                      backgroundColor: Colors.white,
+                    )
+                        : Text(
+                      'No QR Code Available',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey,
+                      ),
+                    ),
+                    SizedBox(height: 5),
+                    Text(
+                      'Show this QR code to the park staff',
+                      style: TextStyle(fontSize: 14, color: Colors.grey),
+                    ),
+                  ],
+                ),
               ),
-            ),
+              SizedBox(height: 15),
+              Text(
+                'Expires on: ${_formatDate(bonus.expiresAt)}',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: themeCtrl.secondaryColor,
+                ),
+              ),
+              SizedBox(height: 20),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: themeCtrl.primaryColor,
+                  minimumSize: Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                ),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text(
+                  'Close',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: themeCtrl.textColor,
+                  ),
+                ),
+              ),
+            ],
           ),
+        ),
+      ),
     );
   }
 
