@@ -11,6 +11,8 @@ class _HomePageState extends State<HomePage> {
   int chestSize = 5;
   double? currentZoom;
   double? initialZoom;
+  // Flag to prevent multiple connectivity alerts
+  bool _isConnectivityAlertShown = false;
 
   // Firestore reference
   final CollectionReference chestsRef = FirebaseFirestore.instance.collection('chests');
@@ -35,9 +37,33 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _setupFirestoreListener() {
-    chestsRef.snapshots().listen((snapshot) {
-      _updateChestMarkers(snapshot);
-    });
+    chestsRef.snapshots().listen(
+          (snapshot) {
+        _updateChestMarkers(snapshot);
+        _isConnectivityAlertShown = false; // Reset alert flag on successful data fetch
+      },
+      onError: (error) {
+        if (mounted && !_isConnectivityAlertShown) {
+          _isConnectivityAlertShown = true;
+          showDialog(
+            context: context,
+            barrierDismissible: true,
+            builder: (context) => AlertDialog(
+              title: Text('Connection Issue'),
+              content: Text(
+                'Your internet connection is unstable. It may take a bit to load chests and your location.',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text('OK'),
+                ),
+              ],
+            ),
+          );
+        }
+      },
+    );
   }
 
   void _updateChestMarkers(QuerySnapshot snapshot) {
