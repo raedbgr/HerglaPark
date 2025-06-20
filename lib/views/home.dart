@@ -149,15 +149,6 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _navigateToChallenge(BuildContext context, String chestId, String challengeType) {
-    // if (challengeType == 'quiz') {
-    //   Get.toNamed('/quiz', arguments: {'chestId': chestId});
-    // } else if (challengeType == 'whack_a_mole') {
-    //   Get.toNamed('/whack_a_mole', arguments: {'chestId': chestId});
-    // } else if (challengeType == 'card_match') {
-    //   Get.toNamed('/card_match', arguments: {'chestId': chestId});
-    // } else {
-    //   Get.toNamed('/slide_puzzle', arguments: {'chestId': chestId});
-    // }
     switch (challengeType) {
       case 'quiz':
         Get.toNamed('/quiz', arguments: {'chestId': chestId});
