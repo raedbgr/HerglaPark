@@ -527,7 +527,7 @@ class _MiniGameSelectorDialogState extends State<MiniGameSelectorDialog> with Si
               alignment: Alignment.center,
               children: [
                 Container(
-                  height: 100,
+                  height: 75,
                   width: 200,
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.grey[300]!, width: 2),
@@ -580,13 +580,13 @@ class _MiniGameSelectorDialogState extends State<MiniGameSelectorDialog> with Si
                     Container(
                       width: 180,
                       height: 2,
-                      color: Colors.black87,
+                      color: themeCtrl.primaryColor,
                     ),
                     SizedBox(height: 60),
                     Container(
                       width: 180,
                       height: 2,
-                      color: Colors.black87,
+                      color: themeCtrl.primaryColor,
                     ),
                   ],
                 ),

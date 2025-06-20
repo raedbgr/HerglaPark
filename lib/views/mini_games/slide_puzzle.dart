@@ -451,8 +451,8 @@ class _SlidePuzzleState extends State<SlidePuzzle> with TickerProviderStateMixin
                     Expanded(
                       child: Center(
                         child: Container(
-                          width: 300,
-                          height: 300,
+                          width: 310,
+                          height: 310,
                           padding: EdgeInsets.all(8),
                           decoration: BoxDecoration(
                             color: Colors.grey[200],
@@ -481,9 +481,9 @@ class _SlidePuzzleState extends State<SlidePuzzle> with TickerProviderStateMixin
                                     width: 92,
                                     height: 92,
                                     decoration: BoxDecoration(
-                                      color: tile == 0 ? Colors.transparent : Colors.blue,
+                                      color: tile == 0 ? Colors.transparent : themeCtrl.primaryColor,
                                       borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(color: Colors.black54),
+                                      // border: Border.all(color: Colors.black54),
                                     ),
                                     child: Center(
                                       child: tile != 0
@@ -492,7 +492,7 @@ class _SlidePuzzleState extends State<SlidePuzzle> with TickerProviderStateMixin
                                         style: TextStyle(
                                           fontSize: 32,
                                           fontWeight: FontWeight.bold,
-                                          color: Colors.white,
+                                          color: themeCtrl.textColor,
                                         ),
                                       )
                                           : null,

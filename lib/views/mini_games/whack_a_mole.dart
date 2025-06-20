@@ -305,7 +305,7 @@ class WhackAMoleState extends State<WhackAMole> with TickerProviderStateMixin {
                 color: timeLeft > 10 ? Colors.green : Colors.red,
               ),
               Padding(
-                padding: EdgeInsets.symmetric(vertical: 5),
+                padding: EdgeInsets.symmetric(vertical: 50),
                 child: Text('$timeLeft seconds left', style: TextStyle(color: timeLeft > 10 ? themeCtrl.primaryColor : themeCtrl.secondaryColor)),
               ),
               Expanded(
@@ -348,7 +348,7 @@ class WhackAMoleState extends State<WhackAMole> with TickerProviderStateMixin {
                                 if (_isTapped[index])
                                   TweenAnimationBuilder(
                                     tween: Tween(begin: 0.0, end: 1.0),
-                                    duration: const Duration(milliseconds: 50),
+                                    duration: const Duration(milliseconds: 200),
                                     builder: (_, value, child) => Opacity(
                                       opacity: value,
                                       child: Transform.scale(scale: value, child: child),

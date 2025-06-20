@@ -483,7 +483,7 @@ class _CardMatchState extends State<CardMatch> with TickerProviderStateMixin {
                                           child: Icon(
                                             cardIcons[index],
                                             size: 40,
-                                            color: themeCtrl.secondaryColor,
+                                            color: themeCtrl.textColor,
                                           ),
                                         ),
                                       ),
