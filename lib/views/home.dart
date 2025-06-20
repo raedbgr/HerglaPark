@@ -430,25 +430,25 @@ class _MiniGameSelectorDialogState extends State<MiniGameSelectorDialog> with Si
   void initState() {
     super.initState();
 
-    final challenges = ['quiz', 'whack_a_mole', 'card_match', 'slide_puzzle'];
-    selectedGame = challenges[Random().nextInt(challenges.length)];
+    selectedGame = games[Random().nextInt(games.length)];
+    print('## Selected game: $selectedGame');
 
     _scrollController = ScrollController();
 
     _controller = AnimationController(
       vsync: this,
-      duration: Duration(seconds: 5),
+      duration: Duration(seconds: 3),
     );
 
     _animation = CurvedAnimation(
       parent: _controller,
-      curve: Cubic(0.1, 0.9, 0.2, 1.0),
+      curve: Curves.easeOut,
     );
 
     final itemHeight = 60.0;
     final cycleLength = games.length * itemHeight;
-    final targetIndex = games.indexWhere((game) => game == selectedGame, 1);
-    final targetOffset = (targetIndex * itemHeight) + (cycleLength * 5) - (itemHeight / 2);
+    final targetIndex = games.indexOf(selectedGame);
+    final targetOffset = (targetIndex * itemHeight) + (cycleLength * 2);
 
     _animation.addListener(() {
       if (_scrollController.hasClients) {
@@ -463,12 +463,15 @@ class _MiniGameSelectorDialogState extends State<MiniGameSelectorDialog> with Si
         isSpinning = false;
       });
       if (_scrollController.hasClients) {
-        _scrollController.jumpTo(targetOffset % cycleLength);
+        _scrollController.jumpTo(targetIndex * itemHeight);
       }
       Future.delayed(Duration(seconds: 1), () {
-        if (mounted) {
+        if (mounted && games.contains(selectedGame)) {
+          print('## Closing dialog and navigating to $selectedGame');
           Navigator.of(context).pop();
           widget.onGameSelected(selectedGame);
+        } else {
+          print('## Invalid or unmounted state, skipping navigation');
         }
       });
     });
@@ -531,40 +534,43 @@ class _MiniGameSelectorDialogState extends State<MiniGameSelectorDialog> with Si
                     borderRadius: BorderRadius.circular(10),
                     color: Colors.grey[100],
                   ),
-                  child: ShaderMask(
-                    shaderCallback: (Rect bounds) {
-                      return LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          Colors.white,
-                          Colors.white,
-                          Colors.transparent,
-                        ],
-                        stops: [0.0, 0.3, 0.7, 1.0],
-                      ).createShader(bounds);
-                    },
-                    blendMode: BlendMode.dstIn,
-                    child: ListView.builder(
-                      controller: _scrollController,
-                      physics: isSpinning ? NeverScrollableScrollPhysics() : ClampingScrollPhysics(),
-                      itemCount: games.length * 10,
-                      itemBuilder: (context, index) {
-                        final game = games[index % games.length];
-                        return Container(
-                          height: 60,
-                          alignment: Alignment.center,
-                          child: Text(
-                            _getDisplayName(game),
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
-                          ),
-                        );
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: ShaderMask(
+                      shaderCallback: (Rect bounds) {
+                        return LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            Colors.white,
+                            Colors.white,
+                            Colors.transparent,
+                          ],
+                          stops: [0.0, 0.2, 0.8, 1.0],
+                        ).createShader(bounds);
                       },
+                      blendMode: BlendMode.dstIn,
+                      child: ListView.builder(
+                        controller: _scrollController,
+                        physics: isSpinning ? NeverScrollableScrollPhysics() : ClampingScrollPhysics(),
+                        itemCount: games.length * 3,
+                        itemBuilder: (context, index) {
+                          final game = games[index % games.length];
+                          return Container(
+                            height: 60,
+                            alignment: Alignment.center,
+                            child: Text(
+                              _getDisplayName(game),
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                     ),
                   ),
                 ),
@@ -576,7 +582,7 @@ class _MiniGameSelectorDialogState extends State<MiniGameSelectorDialog> with Si
                       height: 2,
                       color: Colors.black87,
                     ),
-                    SizedBox(height: 50),
+                    SizedBox(height: 60),
                     Container(
                       width: 180,
                       height: 2,
