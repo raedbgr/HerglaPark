@@ -348,7 +348,7 @@ class WhackAMoleState extends State<WhackAMole> with TickerProviderStateMixin {
                                 if (_isTapped[index])
                                   TweenAnimationBuilder(
                                     tween: Tween(begin: 0.0, end: 1.0),
-                                    duration: const Duration(milliseconds: 500),
+                                    duration: const Duration(milliseconds: 50),
                                     builder: (_, value, child) => Opacity(
                                       opacity: value,
                                       child: Transform.scale(scale: value, child: child),
