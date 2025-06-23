@@ -353,9 +353,18 @@ class _ProfilePageState extends State<ProfilePage> {
               top: 75,
               // center the avatar
               left: MediaQuery.of(context).size.width / 2 - 55,
-              child: CircleAvatar(
-                radius: 55,
-                backgroundImage: AssetImage('assets/images/player.png'),
+              child: Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: themeCtrl.backgroundColor,
+                    width: 3
+                  )
+                ),
+                child: CircleAvatar(
+                  radius: 55,
+                  backgroundImage: AssetImage('assets/images/player.png'),
+                ),
               ),
             ),
             // back button
