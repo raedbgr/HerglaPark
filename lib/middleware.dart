@@ -24,6 +24,7 @@ class Middleware extends StatelessWidget {
             if (snapshot.data == null) {
               return AuthPage();
             } else {
+              authCtrl.fetchUserData(snapshot.data!.uid);
               return HomePage();
             }
           }
