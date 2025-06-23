@@ -133,7 +133,7 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
               child: Column(
                 children: [
-                  SizedBox(height: 40),
+                  SizedBox(height: 50),
                   Text(
                     authCtrl.currentUser.value.username ?? 'Player Name',
                     style: TextStyle(fontSize: 22, fontWeight: FontWeight.w500),
