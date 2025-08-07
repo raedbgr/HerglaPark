@@ -6,6 +6,7 @@ class UserModel {
   String? avatar;
   String? email;
   int? chestsOpened;
+  int? points;
   Timestamp? createdAt;
 
   UserModel({
@@ -14,6 +15,7 @@ class UserModel {
     this.avatar,
     this.email,
     this.chestsOpened,
+    this.points,
     this.createdAt,
   });
 
@@ -23,6 +25,7 @@ class UserModel {
     email = json['email'];
     avatar = json['avatar'];
     chestsOpened = json['chestsOpened'];
+    points = json['points'];
     createdAt = json['createdAt'];
   }
 
@@ -33,7 +36,29 @@ class UserModel {
       'email': email,
       'avatar': avatar,
       'chestsOpened': chestsOpened,
+      'points': points,
       'createdAt': createdAt,
+    };
+  }
+}
+
+class PointHistory {
+  final int pointsGained;
+  final Timestamp timestamp;
+
+  PointHistory({
+    required this.pointsGained,
+    required this.timestamp,
+  });
+
+  PointHistory.fromJson(Map<String, dynamic> json)
+      : pointsGained = json['pointsGained'],
+        timestamp = json['timestamp'];
+
+  Map<String, dynamic> toJson() {
+    return {
+      'pointsGained': pointsGained,
+      'timestamp': timestamp,
     };
   }
 }

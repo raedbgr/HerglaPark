@@ -3,7 +3,6 @@ import '/imports.dart';
 class HomeController extends GetxController {
   late GoogleMapController mapController;
 
-  // Observable variables for user's current location
   final Rx<Position?> currentPosition = Rx<Position?>(null);
   final RxBool isLocationServiceEnabled = false.obs;
   final RxDouble proximityThreshold = 15.0.obs;
@@ -14,10 +13,12 @@ class HomeController extends GetxController {
   );
 
   StreamSubscription<Position>? _positionStream;
+  final RxnString mapStyle = RxnString(null);
 
   @override
   void onInit() {
     super.onInit();
+    loadMapStyle();
     _initLocationTracking();
   }
 
@@ -26,6 +27,19 @@ class HomeController extends GetxController {
     stopLocationUpdates();
     mapController.dispose();
     super.onClose();
+  }
+
+  Future<void> loadMapStyle() async {
+    final now = DateTime.now();
+    final hour = now.hour;
+    final isNightTime = hour >= 19 || hour < 5;
+
+    final mapStylePath = isNightTime
+        ? 'assets/map/night_map.json'
+        : 'assets/map/map_style.json';
+
+    final style = await rootBundle.loadString(mapStylePath);
+    mapStyle.value = style;
   }
 
   // Initialize location tracking
@@ -81,7 +95,7 @@ class HomeController extends GetxController {
     _positionStream = Geolocator.getPositionStream(
       locationSettings: LocationSettings(
         accuracy: LocationAccuracy.high,
-        distanceFilter: 5, // Update if user moves 5 meters
+        distanceFilter: 1, // Update if user moves per meter
       ),
     ).listen((Position position) {
       currentPosition.value = position;
@@ -116,12 +130,11 @@ class HomeController extends GetxController {
 
   void onMapCreated(GoogleMapController controller) async {
     mapController = controller;
-    String style = await rootBundle.loadString('assets/map/map_style.json');
-    mapController.setMapStyle(style);
 
     // Move camera to user location if available
     recenterOnUser();
   }
+
 
   // Calculate distance between two points in meters
   double calculateDistance(LatLng point1, LatLng point2) {

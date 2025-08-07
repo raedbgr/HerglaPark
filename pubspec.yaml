@@ -25,7 +25,8 @@ dependencies:
   flutter_native_splash: ^2.4.6
   geolocator: ^14.0.0
   uuid: ^4.5.1
-  qr_flutter: ^4.1.0
+  flutter_fortune_wheel: ^1.3.2
+  intl: ^0.20.2
 
 dev_dependencies:
   flutter_test:
@@ -41,13 +42,16 @@ flutter:
 
   assets:
     - assets/map/
-    - assets/fonts/
-    - assets/3d_models/
     - assets/images/
-  
+    - assets/images/avatars/
+    - assets/images/whack_a_kart/
+    - assets/images/kart_slide/
+    - assets/images/card_match/
+    - assets/images/quiz/
+    - assets/images/alerts/
+    - assets/questions.json
+
   fonts:
-    - family: Serif
+    - family: myFont
       fonts:
-        - asset: assets/fonts/BlackStage-Regular.ttf
-        - asset: assets/fonts/fredonia.ttf
-        - asset: assets/fonts/Qerginas-Frenchstyle-Serif.otf
+        - asset: assets/fonts/BRLNSDB.TTF

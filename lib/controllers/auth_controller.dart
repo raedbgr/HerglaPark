@@ -14,8 +14,9 @@ class AuthController extends GetxController {
         id: '',
         username: '',
         email: '',
-        avatar: 'assets/images/player.png',
+        avatar: 'assets/images/avatar_1.png',
         chestsOpened: 0,
+        points: 0,
       ).obs;
   // Add a boolean to track loading state
   var isLoading = false.obs;
@@ -54,8 +55,10 @@ class AuthController extends GetxController {
           'id': user.uid,
           'username': username,
           'email': email,
-          'avatar': null,
+          'avatar': "avatar_1",
           'chestsOpened': 0,
+          'points': 0,
+          'history': [],
           'createdAt': now,
         });
 

@@ -9,25 +9,25 @@ export 'package:flutter/material.dart';
 export 'package:flutter/services.dart';
 export 'dart:math';
 export 'dart:async';
+export 'dart:convert';
 export 'package:get/get.dart';
 export 'package:uuid/uuid.dart';
+export 'package:intl/intl.dart' hide TextDirection;
 export 'package:geolocator/geolocator.dart';
 export 'package:google_maps_flutter/google_maps_flutter.dart';
 export 'package:flutter_native_splash/flutter_native_splash.dart';
-export 'package:qr_flutter/qr_flutter.dart';
 export 'package:firebase_auth/firebase_auth.dart';
 export 'package:firebase_core/firebase_core.dart';
 export 'package:firebase_database/firebase_database.dart';
 export 'package:cloud_firestore/cloud_firestore.dart'
     hide Query, Transaction, TransactionHandler;
+export 'package:flutter_fortune_wheel/flutter_fortune_wheel.dart';
 
 // models
 export 'models/user.dart';
 export 'models/chest.dart';
-export 'models/bonus.dart';
 
 // views
-export 'views/auth/auth.dart';
 export 'views/auth/login.dart';
 export 'views/auth/register.dart';
 export 'views/home.dart';
@@ -45,4 +45,7 @@ export 'controllers/theme_controller.dart';
 
 // components
 export 'components/text_field.dart';
-export 'components/fading_line.dart';
+export 'components/wheel.dart';
+
+// utils
+export 'utils/handlers.dart';

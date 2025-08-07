@@ -1,18 +1,21 @@
 import '/imports.dart';
 
 class HomePage extends StatefulWidget {
+  const HomePage({super.key});
+
   @override
   _HomePageState createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
-  BitmapDescriptor? _chestIcon;
+  // Replace single chest icon with a map of chest icons
+  final Map<String, BitmapDescriptor> _chestIcons = {};
   final Set<Polygon> parkBoundary = {};
   int chestSize = 5;
   double? currentZoom;
   double? initialZoom;
-  // Flag to prevent multiple connectivity alerts
   bool _isConnectivityAlertShown = false;
+  bool _isOutsideParkAlertShown = false; // Flag to prevent multiple outside park alerts
 
   // Firestore reference
   final CollectionReference chestsRef = FirebaseFirestore.instance.collection('chests');
@@ -23,17 +26,18 @@ class _HomePageState extends State<HomePage> {
   // Visible chests (within proximity)
   final RxSet<String> visibleChestIds = RxSet<String>();
 
-  Future<void> _loadChestIcon() async {
-    _chestIcon = await BitmapDescriptor.fromAssetImage(
-      ImageConfiguration(
-        devicePixelRatio: 2.0,
-        size: Size(
-          chestSize.toDouble(),
-          chestSize.toDouble(),
-        ),
-      ),
+  // Load all chest icons
+  Future<void> _loadChestIcons() async {
+    _chestIcons.clear();
+    final BitmapDescriptor chestIcon = await BitmapDescriptor.asset(
+      height: 75,
+      width: 75,
+      ImageConfiguration(devicePixelRatio: 2.0, size: Size(chestSize.toDouble(), chestSize.toDouble())),
       'assets/images/chest.png',
     );
+
+    // Use same icon for all chests
+    _chestIcons['default'] = chestIcon;
   }
 
   void _setupFirestoreListener() {
@@ -70,6 +74,7 @@ class _HomePageState extends State<HomePage> {
     if (mounted) {
       setState(() {
         markers.clear();
+        visibleChestIds.clear();
 
         for (var doc in snapshot.docs) {
           final data = doc.data() as Map<String, dynamic>;
@@ -90,14 +95,17 @@ class _HomePageState extends State<HomePage> {
 
           // Only add marker if chest is within proximity
           if (isInProximity) {
+            // Use the default chest icon
+            final icon = _chestIcons['default']!;
+
             markers.add(
               Marker(
                 markerId: MarkerId(doc.id),
                 position: chestLocation,
-                icon: _chestIcon!, // Safe to use after initialization
+                icon: icon,
                 consumeTapEvents: true, // Prevent map from centering on tap
                 onTap: () {
-                  _showMiniGameSelectorDialog(context, doc.id);
+                  _handleChestTap(context, doc.id);
                 },
               ),
             );
@@ -107,99 +115,180 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  void _showMiniGameSelectorDialog(BuildContext context, String chestId) {
+  void _handleChestTap(BuildContext context, String chestId) {
     FirebaseFirestore.instance.collection('chests').doc(chestId).get().then((doc) {
-      if (doc.exists && mounted) {
-        final data = doc.data() as Map<String, dynamic>;
+      if (!mounted || !doc.exists) return;
 
-        if (data.containsKey('cooldownUntil')) {
-          final cooldownUntil = data['cooldownUntil'] as Timestamp;
-          final cooldownEnd = cooldownUntil.toDate().add(Duration(minutes: 5));
+      final data = doc.data()!;
+      if (data.containsKey('cooldownUntil')) {
+        final cooldownUntil = data['cooldownUntil'] as Timestamp;
+        final cooldownEnd = cooldownUntil.toDate().add(Duration(minutes: 5));
 
-          if (DateTime.now().isBefore(cooldownEnd)) {
-            final remainingMinutes = cooldownEnd.difference(DateTime.now()).inMinutes + 1;
-            showDialog(
-              context: context,
-              builder: (context) => AlertDialog(
-                title: Text('Chest Locked'),
-                content: Text('This chest is still locked. You can try again in $remainingMinutes minutes.'),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: Text('OK'),
-                  ),
-                ],
+        if (DateTime.now().isBefore(cooldownEnd)) {
+          final remainingMinutes = cooldownEnd.difference(DateTime.now()).inMinutes + 1;
+          showDialog(
+            context: context,
+            builder: (context) => Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
               ),
-            );
-            return;
-          }
+              backgroundColor: Colors.white,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 40),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  spacing: 15,
+                  children: [
+                    Image.asset('assets/images/alerts/locked.png', height: 120,),
+                    Text(
+                      'Coffre Verrouillé',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                          fontFamily: 'myFont',
+                          fontSize: 24,
+                          fontStyle: FontStyle.italic
+                      ),
+                    ),
+                    Text(
+                      'Ce coffre est encore verrouillé. Réessayez dans $remainingMinutes minutes.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w500,
+                          fontStyle: FontStyle.italic
+                      ),
+                    ),
+                    SizedBox(),
+                    InkWell(
+                      onTap: () {
+                        Get.back();
+                      },
+                      splashColor: Colors.black.withValues(alpha: 0.3),
+                      child: Ink(
+                        padding: EdgeInsets.symmetric(vertical: 3, horizontal: 20),
+                        decoration: BoxDecoration(
+                          color: Colors.green,
+                          borderRadius: BorderRadius.circular(50),
+                        ),
+                        child: Text(
+                          'OK',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                              color: themeCtrl.textColor,
+                              fontSize: 16
+                          ),
+                        ),
+                      ),
+                    )
+                  ],
+                ),
+              ),
+            )
+          );
+          return;
         }
-
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => MiniGameSelectorDialog(
-            onGameSelected: (selectedChallenge) {
-              _navigateToChallenge(context, chestId, selectedChallenge);
-            },
-          ),
-        );
       }
+
+      // Show spinning wheel
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => GameWheelDialog(chestId: chestId),
+      );
     });
   }
 
-  void _navigateToChallenge(BuildContext context, String chestId, String challengeType) {
-    switch (challengeType) {
-      case 'quiz':
-        Get.toNamed('/quiz', arguments: {'chestId': chestId});
-        break;
-      case 'whack_a_mole':
-        Get.toNamed('/whack_a_mole', arguments: {'chestId': chestId});
-        break;
-      case 'card_match':
-        Get.toNamed('/card_match', arguments: {'chestId': chestId});
-        break;
-      case 'slide_puzzle':
-        Get.toNamed('/slide_puzzle', arguments: {'chestId': chestId});
-        break;
-      default:
+  void _checkUserLocation() {
+    if (homeCtrl.currentPosition.value != null && mounted && !_isOutsideParkAlertShown) {
+      final userLocation = LatLng(
+        homeCtrl.currentPosition.value!.latitude,
+        homeCtrl.currentPosition.value!.longitude,
+      );
+      if (!_isPointInPolygon(userLocation, parkPolygonCoords)) {
+        _isOutsideParkAlertShown = true;
         showDialog(
           context: context,
-          builder: (context) => AlertDialog(
-            title: Text('Error'),
-            content: Text('Invalid challenge type: $challengeType'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text('OK'),
+          barrierDismissible: true,
+          builder: (context) => Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            backgroundColor: Colors.white,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 40),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                spacing: 15,
+                children: [
+                  Image.asset('assets/images/alerts/warning.png', height: 120,),
+                  Text(
+                    'Hors des Limites du Parc',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                        fontFamily: 'myFont',
+                        fontSize: 24,
+                        fontStyle: FontStyle.italic
+                    ),
+                  ),
+                  Text(
+                    'Vous êtes actuellement hors des limites du parc. Les coffres ne peuvent être trouvés qu’à l’intérieur du parc.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500,
+                        fontStyle: FontStyle.italic
+                    ),
+                  ),
+                  SizedBox(),
+                  InkWell(
+                    onTap:  () {
+                      _isOutsideParkAlertShown = false;
+                      Get.back();
+                    },
+                    splashColor: Colors.black.withValues(alpha: 0.3),
+                    child: Ink(
+                      padding: EdgeInsets.symmetric(vertical: 3, horizontal: 20),
+                      decoration: BoxDecoration(
+                        color: Colors.green,
+                        borderRadius: BorderRadius.circular(50),
+                      ),
+                      child: Text(
+                        'OK',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: themeCtrl.textColor,
+                            fontSize: 16
+                        ),
+                      ),
+                    ),
+                  )
+                ],
               ),
-            ],
+            ),
           ),
         );
-        return;
-    }
-    // leave this as is
-    if (homeCtrl.currentPosition.value != null) {
-      homeCtrl.animateToUserLocation(homeCtrl.currentPosition.value!);
+      } else {
+        _isOutsideParkAlertShown = false; // Reset flag if user is inside the park
+      }
     }
   }
 
-  void _setupBoudaries() {
+  void _setupBoundaries() {
     parkBoundary.add(
       Polygon(
         polygonId: PolygonId('park_boundary'),
         points: parkPolygonCoords.map((latLng) => LatLng(latLng.latitude, latLng.longitude)).toList(),
-        strokeWidth: 2,
-        strokeColor: themeCtrl.primaryColor,
+        strokeWidth: 0,
+        strokeColor: Colors.transparent,
         fillColor: Colors.transparent,
       ),
     );
   }
 
   Future<void> _initialize() async {
-    await _loadChestIcon();
+    await _loadChestIcons();
     _setupFirestoreListener();
-    _setupBoudaries();
+    _setupBoundaries();
   }
 
   @override
@@ -209,6 +298,7 @@ class _HomePageState extends State<HomePage> {
 
     ever(homeCtrl.currentPosition, (_) {
       chestsRef.get().then((snapshot) => _updateChestMarkers(snapshot));
+      _checkUserLocation(); // Check user location on position update
     });
   }
 
@@ -222,7 +312,7 @@ class _HomePageState extends State<HomePage> {
               initialZoom = currentZoom;
             },
             onScaleUpdate: (ScaleUpdateDetails details) {
-              if (initialZoom != null && currentZoom != null && homeCtrl.mapController != null) {
+              if (initialZoom != null && currentZoom != null) {
                 double newZoom = initialZoom! + (details.scale - 1) * 2.0;
                 homeCtrl.mapController.moveCamera(CameraUpdate.zoomTo(newZoom));
               }
@@ -242,6 +332,7 @@ class _HomePageState extends State<HomePage> {
               rotateGesturesEnabled: false,
               tiltGesturesEnabled: false,
               zoomGesturesEnabled: false,
+              style: homeCtrl.mapStyle.value,
               onCameraMove: (CameraPosition position) {
                 currentZoom = position.zoom;
               },
@@ -286,7 +377,7 @@ class _HomePageState extends State<HomePage> {
           //   right: 16,
           //   child: FloatingActionButton(
           //     heroTag: "addChestBtn",
-          //     onPressed: _chestIcon != null ? () => generateRandomChests(5) : null,
+          //     onPressed: _chestIcons.isNotEmpty ? () => generateRandomChests(5) : null,
           //     child: Icon(Icons.add),
           //   ),
           // ),
@@ -312,7 +403,7 @@ class _HomePageState extends State<HomePage> {
                     Image.asset('assets/images/chest.png', height: 24),
                     SizedBox(width: 8),
                     Text(
-                      '${visibleChestIds.length} nearby',
+                      '${visibleChestIds.length} proche',
                       style: TextStyle(
                         color: themeCtrl.primaryColor,
                         fontWeight: FontWeight.bold,
@@ -329,20 +420,17 @@ class _HomePageState extends State<HomePage> {
   }
 
   void generateRandomChests(int count) async {
-    if (_chestIcon == null) return;
+    if (_chestIcons.isEmpty) return;
 
     for (int i = 0; i < count; i++) {
       final randomLocation = generateRandomPointInPolygon(parkPolygonCoords);
-      final randomBonusType = getRandomBonusType();
-
       final uuid = Uuid().v4();
 
       await chestsRef.doc(uuid).set({
         'id': uuid,
-        "location": Location(lat: randomLocation.latitude, lng: randomLocation.longitude).toJson(),
-        'bonusType': randomBonusType,
+        'location': Location(lat: randomLocation.latitude, lng: randomLocation.longitude).toJson(),
         'spawnedAt': FieldValue.serverTimestamp(),
-        'expiresAt': Timestamp.fromDate(DateTime.now().add(Duration(days: 7))),
+        'expiresAt': Timestamp.fromDate(DateTime.now().add(Duration(hours: 24))),
       });
 
       print("## Chest $uuid generated and saved successfully!");
@@ -353,10 +441,10 @@ class _HomePageState extends State<HomePage> {
             Marker(
               markerId: MarkerId(uuid),
               position: randomLocation,
-              icon: _chestIcon!,
+              icon: _chestIcons['default']!,
               consumeTapEvents: true,
               onTap: () {
-                _showMiniGameSelectorDialog(context, uuid);
+                _handleChestTap(context, uuid);
               },
             ),
           );
@@ -372,7 +460,7 @@ class _HomePageState extends State<HomePage> {
         chestSize = size;
       });
     }
-    _loadChestIcon().then((_) {
+    _loadChestIcons().then((_) {
       chestsRef.get().then((snapshot) => _updateChestMarkers(snapshot));
     });
   }
@@ -413,205 +501,4 @@ bool _isPointInPolygon(LatLng point, List<LatLng> polygon) {
   }
 
   return c;
-}
-
-String getRandomBonusType() {
-  final List<String> bonusTypes = ["vr", "karting", "shooting"];
-  final random = Random();
-  return bonusTypes[random.nextInt(bonusTypes.length)];
-}
-
-class MiniGameSelectorDialog extends StatefulWidget {
-  final Function(String) onGameSelected;
-
-  const MiniGameSelectorDialog({super.key, required this.onGameSelected});
-
-  @override
-  _MiniGameSelectorDialogState createState() => _MiniGameSelectorDialogState();
-}
-
-class _MiniGameSelectorDialogState extends State<MiniGameSelectorDialog> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _animation;
-  late ScrollController _scrollController;
-  final List<String> games = [
-    'quiz',
-    'whack_a_mole',
-    'card_match',
-    'slide_puzzle',
-  ];
-  String selectedGame = '';
-  bool isSpinning = true;
-
-  @override
-  void initState() {
-    super.initState();
-
-    selectedGame = games[Random().nextInt(games.length)];
-    print('## Selected game: $selectedGame');
-
-    _scrollController = ScrollController();
-
-    _controller = AnimationController(
-      vsync: this,
-      duration: Duration(seconds: 3),
-    );
-
-    _animation = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOut,
-    );
-
-    final itemHeight = 60.0;
-    final cycleLength = games.length * itemHeight;
-    final targetIndex = games.indexOf(selectedGame);
-    final targetOffset = (targetIndex * itemHeight) + (cycleLength * 2);
-
-    _animation.addListener(() {
-      if (_scrollController.hasClients) {
-        final progress = _animation.value;
-        final scrollPosition = progress * targetOffset;
-        _scrollController.jumpTo(scrollPosition % cycleLength);
-      }
-    });
-
-    _controller.forward().then((_) {
-      setState(() {
-        isSpinning = false;
-      });
-      if (_scrollController.hasClients) {
-        _scrollController.jumpTo(targetIndex * itemHeight);
-      }
-      Future.delayed(Duration(seconds: 1), () {
-        if (mounted && games.contains(selectedGame)) {
-          print('## Closing dialog and navigating to $selectedGame');
-          Navigator.of(context).pop();
-          widget.onGameSelected(selectedGame);
-        } else {
-          print('## Invalid or unmounted state, skipping navigation');
-        }
-      });
-    });
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  String _getDisplayName(String game) {
-    switch (game) {
-      case 'quiz':
-        return 'Quiz';
-      case 'whack_a_mole':
-        return 'Whack a Mole';
-      case 'card_match':
-        return 'Card Match';
-      case 'slide_puzzle':
-        return 'Slide Puzzle';
-      default:
-        return game;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      contentPadding: EdgeInsets.zero,
-      content: Container(
-        width: 300,
-        height: 200,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'Selecting Mini-Game...',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-            ),
-            SizedBox(height: 20),
-            Stack(
-              alignment: Alignment.center,
-              children: [
-                Container(
-                  height: 75,
-                  width: 200,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey[300]!, width: 2),
-                    borderRadius: BorderRadius.circular(10),
-                    color: Colors.grey[100],
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: ShaderMask(
-                      shaderCallback: (Rect bounds) {
-                        return LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.transparent,
-                            Colors.white,
-                            Colors.white,
-                            Colors.transparent,
-                          ],
-                          stops: [0.0, 0.2, 0.8, 1.0],
-                        ).createShader(bounds);
-                      },
-                      blendMode: BlendMode.dstIn,
-                      child: ListView.builder(
-                        controller: _scrollController,
-                        physics: isSpinning ? NeverScrollableScrollPhysics() : ClampingScrollPhysics(),
-                        itemCount: games.length * 3,
-                        itemBuilder: (context, index) {
-                          final game = games[index % games.length];
-                          return Container(
-                            height: 60,
-                            alignment: Alignment.center,
-                            child: Text(
-                              _getDisplayName(game),
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                ),
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      width: 180,
-                      height: 2,
-                      color: themeCtrl.primaryColor,
-                    ),
-                    SizedBox(height: 60),
-                    Container(
-                      width: 180,
-                      height: 2,
-                      color: themeCtrl.primaryColor,
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }

@@ -28,22 +28,34 @@ class QuizScreen extends StatefulWidget {
   _QuizScreenState createState() => _QuizScreenState();
 }
 
-class _QuizScreenState extends State<QuizScreen> with SingleTickerProviderStateMixin {
+class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _animation;
+  late AnimationController _kartAnimationController;
+  late Animation<double> _kartAnimation;
 
   int _currentQuestionIndex = 0;
   bool _answerSelected = false;
   int _selectedAnswerIndex = -1;
   late QuizChallenge _currentChallenge;
+  bool isGameOver = false;
 
   // Timer
   late Timer _timer;
-  int _timeLeft = 30; // 30 seconds per question
+  int _timeLeft = 30;
 
   @override
   void initState() {
     super.initState();
+
+    // Setup kart animation controller
+    _kartAnimationController = AnimationController(
+      vsync: this,
+      duration: Duration(seconds: 30),
+    );
+    _kartAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _kartAnimationController, curve: Curves.linear),
+    );
 
     // Setup animation
     _animationController = AnimationController(
@@ -57,15 +69,71 @@ class _QuizScreenState extends State<QuizScreen> with SingleTickerProviderStateM
 
     _animationController.forward();
 
-    // Select a random challenge
-    _currentChallenge = _getRandomChallenge();
+    // Load and select random questions
+    _loadChallenge();
+
+    // Reset and start kart animation
+    _kartAnimationController.reset();
+    _kartAnimationController.reverse(from: 1.0); // Run in reverse for countdown
 
     // Start timer
     _startTimer();
   }
 
+  Future<void> _loadChallenge() async {
+    try {
+      final String jsonString = await DefaultAssetBundle.of(context).loadString('assets/questions.json');
+      final List<dynamic> questionsJson = jsonDecode(jsonString);
+
+      // Shuffle questions and select 3
+      questionsJson.shuffle(Random());
+      final List<QuizQuestion> selectedQuestions = questionsJson.take(3).map((questionJson) {
+        // Get original options and correct answer index
+        List<String> options = List<String>.from(questionJson['options']);
+        int originalCorrectIndex = questionJson['correctAnswerIndex'];
+
+        // Create a list of indices and shuffle them
+        List<int> indices = List.generate(options.length, (index) => index);
+        indices.shuffle(Random());
+
+        // Create shuffled options and find new correct answer index
+        List<String> shuffledOptions = indices.map((i) => options[i]).toList();
+        int newCorrectIndex = indices.indexOf(originalCorrectIndex);
+
+        return QuizQuestion(
+          question: questionJson['question'],
+          options: shuffledOptions,
+          correctAnswerIndex: newCorrectIndex,
+        );
+      }).toList();
+
+      setState(() {
+        _currentChallenge = QuizChallenge(
+          id: 'quiz',
+          questions: selectedQuestions,
+        );
+      });
+    } catch (e) {
+      // Handle error (e.g., show error message or use fallback questions)
+      print('Error loading JSON: $e');
+      setState(() {
+        _currentChallenge = QuizChallenge(
+          id: 'fallback',
+          questions: [
+            QuizQuestion(
+              question: 'Error loading questions. Try this: What is 2+2?',
+              options: ['3', '4', '5', '6'],
+              correctAnswerIndex: 1,
+            ),
+          ],
+        );
+      });
+    }
+  }
+
   @override
   void dispose() {
+    _kartAnimationController.dispose();
     _animationController.dispose();
     _timer.cancel();
     super.dispose();
@@ -78,83 +146,13 @@ class _QuizScreenState extends State<QuizScreen> with SingleTickerProviderStateM
           _timeLeft--;
         } else {
           _timer.cancel();
-          _handleFailure("Time's up!");
+          handleFailure(context, widget.chestId, "Time's up!");
         }
       });
     });
-  }
-
-  void _resetTimer() {
-    _timer.cancel();
-    _timeLeft = 30;
-    _startTimer();
-  }
-
-  QuizChallenge _getRandomChallenge() {
-    List<QuizChallenge> challenges = [
-      QuizChallenge(
-        id: 'challenge1',
-        questions: [
-          QuizQuestion(
-            question: 'What is the capital of Tunisia?',
-            options: ['Tunis', 'Sfax', 'Sousse', 'Hammamet'],
-            correctAnswerIndex: 0,
-          ),
-          QuizQuestion(
-            question: 'Which ancient city in Tunisia was a major power in the Mediterranean?',
-            options: ['Carthage', 'Alexandria', 'Athens', 'Rome'],
-            correctAnswerIndex: 0,
-          ),
-          QuizQuestion(
-            question: 'What is the largest desert in Tunisia?',
-            options: ['Sahara Desert', 'Arabian Desert', 'Gobi Desert', 'Kalahari Desert'],
-            correctAnswerIndex: 0,
-          ),
-        ],
-      ),
-      QuizChallenge(
-        id: 'challenge2',
-        questions: [
-          QuizQuestion(
-            question: 'What sea borders Tunisia to the north and east?',
-            options: ['Mediterranean Sea', 'Red Sea', 'Black Sea', 'Caspian Sea'],
-            correctAnswerIndex: 0,
-          ),
-          QuizQuestion(
-            question: 'Which famous movie series had scenes filmed in Tunisia?',
-            options: ['Star Wars', 'Harry Potter', 'Lord of the Rings', 'Pirates of the Caribbean'],
-            correctAnswerIndex: 0,
-          ),
-          QuizQuestion(
-            question: 'What is the official language of Tunisia?',
-            options: ['Arabic', 'French', 'Berber', 'English'],
-            correctAnswerIndex: 0,
-          ),
-        ],
-      ),
-      QuizChallenge(
-        id: 'challenge3',
-        questions: [
-          QuizQuestion(
-            question: 'What year did Tunisia gain independence from France?',
-            options: ['1956', '1945', '1962', '1970'],
-            correctAnswerIndex: 0,
-          ),
-          QuizQuestion(
-            question: 'Which Tunisian dish is made of semolina and typically served with stew?',
-            options: ['Couscous', 'Brik', 'Lablabi', 'Ojja'],
-            correctAnswerIndex: 0,
-          ),
-          QuizQuestion(
-            question: 'What is Tunisia\'s currency?',
-            options: ['Tunisian Dinar', 'Dirham', 'Euro', 'Pound'],
-            correctAnswerIndex: 0,
-          ),
-        ],
-      ),
-    ];
-
-    return challenges[Random().nextInt(challenges.length)];
+    // Reset and start kart animation
+    _kartAnimationController.reset();
+    _kartAnimationController.reverse(from: 1.0); // Run in reverse for countdown
   }
 
   void _handleAnswer(int selectedIndex) {
@@ -163,372 +161,219 @@ class _QuizScreenState extends State<QuizScreen> with SingleTickerProviderStateM
       _selectedAnswerIndex = selectedIndex;
     });
 
-    if (selectedIndex == _currentChallenge.questions[_currentQuestionIndex].correctAnswerIndex) {
+    if (selectedIndex ==
+        _currentChallenge.questions[_currentQuestionIndex].correctAnswerIndex) {
       Future.delayed(Duration(milliseconds: 500), () {
         if (_currentQuestionIndex < _currentChallenge.questions.length - 1) {
           setState(() {
             _currentQuestionIndex++;
             _answerSelected = false;
             _selectedAnswerIndex = -1;
-            _resetTimer();
           });
         } else {
           _timer.cancel();
-          _handleSuccess();
+          endGame(true);
         }
       });
     } else {
       Future.delayed(Duration(milliseconds: 500), () {
         _timer.cancel();
-        _handleFailure("Incorrect answer!");
+        handleFailure(context, widget.chestId, "Réponse est incorrecte !");
       });
     }
   }
 
-  void _handleSuccess() {
-    FirebaseFirestore.instance.collection('chests').doc(widget.chestId).get().then((chestDoc) {
-      if (chestDoc.exists && mounted) {
-        final chestData = chestDoc.data() as Map<String, dynamic>;
-        final bonusType = chestData['bonusType'] as String;
-
-        final qrCode = _generateRandomNumericString(15);
-        final bonusId = Uuid().v4();
-        final userId = FirebaseAuth.instance.currentUser?.uid;
-
-        if (userId != null) {
-          final bonus = Bonus(
-            id: bonusId,
-            type: bonusType,
-            isUsed: false,
-            ownerId: userId,
-            qrCode: qrCode,
-            createdAt: Timestamp.now(),
-            expiresAt: Timestamp.fromDate(DateTime.now().add(Duration(days: 7))),
-          );
-
-          FirebaseFirestore.instance.collection('bonus').doc(bonusId).set(bonus.toJson());
-
-          FirebaseFirestore.instance.collection('users').doc(userId).get().then((userDoc) {
-            if (userDoc.exists) {
-              final userData = userDoc.data() as Map<String, dynamic>;
-              final int currentCount = userData['chestsOpened'] ?? 0;
-              FirebaseFirestore.instance.collection('users').doc(userId).update({
-                'chestsOpened': currentCount + 1,
-              });
-            } else {
-              FirebaseFirestore.instance.collection('users').doc(userId).set({
-                'chestsOpened': 1,
-              });
-            }
-          });
-
-          showDialog(
-            context: context,
-            barrierDismissible: false,
-            builder: (context) => Dialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              child: Container(
-                padding: EdgeInsets.all(20),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 100,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.amber.withOpacity(0.2),
-                      ),
-                      child: Icon(
-                        Icons.emoji_events,
-                        size: 60,
-                        color: Colors.amber,
-                      ),
-                    ),
-                    SizedBox(height: 20),
-                    Text(
-                      'Congratulations!',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: 10),
-                    Text(
-                      'You have successfully opened the chest!',
-                      textAlign: TextAlign.center,
-                    ),
-                    SizedBox(height: 20),
-                    Container(
-                      padding: EdgeInsets.all(15),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[100],
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Column(
-                        children: [
-                          Text(
-                            'You\'ve earned:',
-                            style: TextStyle(fontSize: 16),
-                          ),
-                          SizedBox(height: 10),
-                          Text(
-                            _getBonusTypeDescription(bonusType),
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: _getBonusTypeColor(bonusType),
-                            ),
-                          ),
-                          SizedBox(height: 5),
-                          Text(
-                            'Check your profile to use your reward!',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[600],
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    ),
-                    SizedBox(height: 20),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _getBonusTypeColor(bonusType),
-                        minimumSize: Size(double.infinity, 50),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                        Get.back(); // Return to HomePage
-                      },
-                      child: Text(
-                        'Awesome!',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-
-          FirebaseFirestore.instance.collection('chests').doc(widget.chestId).delete();
-        }
-      }
-    });
-  }
-
-  String _generateRandomNumericString(int length) {
-    final random = Random();
-    final buffer = StringBuffer();
-    for (var i = 0; i < length; i++) {
-      buffer.write(random.nextInt(10).toString());
-    }
-    return buffer.toString();
-  }
-
-  String _getBonusTypeDescription(String bonusType) {
-    switch (bonusType.toLowerCase()) {
-      case 'vr':
-        return 'Free VR Experience';
-      case 'karting':
-        return 'Free Karting Session';
-      case 'shooting':
-        return 'Free Shooting Session';
-      default:
-        return 'Free Park Activity';
-    }
-  }
-
-  Color _getBonusTypeColor(String bonusType) {
-    switch (bonusType.toLowerCase()) {
-      case 'vr':
-        return Colors.blue;
-      case 'karting':
-        return Colors.green;
-      case 'shooting':
-        return Colors.red;
-      default:
-        return Colors.purple;
-    }
-  }
-
-  void _handleFailure(String reason) {
+  void endGame(bool won) {
     if (mounted) {
-      showDialog(
-        context: context,
-        barrierDismissible: true,
-        builder: (context) => AlertDialog(
-          title: Text('Challenge Failed'),
-          content: Text('$reason You can try again in 5 minutes.'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Close dialog
-              },
-              child: Text('OK'),
-            ),
-          ],
-        ),
-      ).then((_) {
-        if (mounted) {
-          FirebaseFirestore.instance.collection('chests').doc(widget.chestId).update({
-            'cooldownUntil': FieldValue.serverTimestamp(),
-          });
-          Get.back(); // Return to HomePage
-        }
+      setState(() {
+        isGameOver = true;
       });
+    }
+    _timer.cancel();
+    if (won) {
+      handleSuccess(context, widget.chestId, 2500);
+    } else {
+      handleFailure(context, widget.chestId, "Le temps est écoulé ou la réponse est incorrecte !");
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_currentChallenge.questions.isEmpty) {
+      return Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     final currentQuestion = _currentChallenge.questions[_currentQuestionIndex];
 
     return AnimatedBuilder(
       animation: _animation,
       builder: (context, child) {
         return Scaffold(
-          appBar: AppBar(
-            title: Text('Quiz Challenge'),
-            automaticallyImplyLeading: true,
-          ),
           body: Opacity(
             opacity: _animation.value,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+            child: Stack(
               children: [
+                // background
                 Container(
-                  padding: EdgeInsets.all(20),
-                  child: Column(
-                    children: [
-                      Text(
-                        'Question ${_currentQuestionIndex + 1}/${_currentChallenge.questions.length}',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  margin: EdgeInsets.symmetric(horizontal: 20),
-                  height: 10,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(5),
-                    color: Colors.grey[200],
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        flex: _timeLeft,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(5),
-                            color: _timeLeft > 10 ? Colors.green : Colors.red,
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        flex: 30 - _timeLeft,
-                        child: Container(),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  alignment: Alignment.centerRight,
-                  padding: EdgeInsets.only(right: 20, top: 5),
-                  child: Text(
-                    '$_timeLeft seconds left',
-                    style: TextStyle(
-                      color: _timeLeft > 10 ? Colors.green : Colors.red,
-                      fontSize: 14,
+                    image: DecorationImage(
+                      image: AssetImage('assets/images/quiz/q_bg.png'),
+                      fit: BoxFit.cover,
                     ),
                   ),
                 ),
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          currentQuestion.question,
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(height: 20),
-                        ...List.generate(
-                          currentQuestion.options.length,
-                              (index) => GestureDetector(
-                            onTap: _answerSelected ? null : () => _handleAnswer(index),
-                            child: Container(
-                              margin: EdgeInsets.only(bottom: 15),
-                              padding: EdgeInsets.all(15),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(10),
-                                color: _getOptionColor(index),
-                                border: Border.all(
-                                  color: _getOptionBorderColor(index),
-                                  width: 2,
+                // items
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 50),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // title
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        child: Image.asset('assets/images/quiz/title.png'),
+                      ),
+                      // main game
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 30),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // question
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  currentQuestion.question,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontFamily: 'myFont',
+                                    fontSize: 24,
+                                    color: themeCtrl.textColor,
+                                  ),
                                 ),
                               ),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    height: 24,
-                                    width: 24,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: _answerSelected && index == _selectedAnswerIndex
-                                          ? _getOptionBorderColor(index)
-                                          : Colors.white,
-                                      border: Border.all(
-                                        color: _getOptionBorderColor(index),
-                                        width: 2,
-                                      ),
-                                    ),
-                                    child: _answerSelected && index == _selectedAnswerIndex
-                                        ? Icon(
-                                      index == currentQuestion.correctAnswerIndex
-                                          ? Icons.check
-                                          : Icons.close,
-                                      size: 16,
+                            ),
+                            SizedBox(height: 25),
+                            // options
+                            ...List.generate(
+                              currentQuestion.options.length,
+                                  (index) => GestureDetector(
+                                onTap:
+                                _answerSelected
+                                    ? null
+                                    : () => _handleAnswer(index),
+                                child: Container(
+                                  width: double.infinity,
+                                  margin: EdgeInsets.only(bottom: 15),
+                                  padding: EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(10),
+                                    color: _getOptionColor(index),
+                                    border: Border.all(
                                       color: Colors.white,
-                                    )
-                                        : null,
+                                      width: 2,
+                                    ),
                                   ),
-                                  SizedBox(width: 15),
-                                  Expanded(
+                                  child: Center(
                                     child: Text(
                                       currentQuestion.options[index],
+                                      textAlign: TextAlign.center,
                                       style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: index == _selectedAnswerIndex
-                                            ? FontWeight.bold
-                                            : FontWeight.normal,
+                                        fontFamily: 'myFont',
+                                        fontSize: 20,
+                                        color: _answerSelected &&
+                                            (index == _selectedAnswerIndex ||
+                                                index ==
+                                                    _currentChallenge
+                                                        .questions[_currentQuestionIndex]
+                                                        .correctAnswerIndex)
+                                            ? themeCtrl.textColor
+                                            : Colors.black,
                                       ),
                                     ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // stats
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Image.asset(
+                              'assets/images/timer.png',
+                              height: 50,
+                            ),
+                            Column(
+                              children: [
+                                Text(
+                                  '$_timeLeft',
+                                  style: TextStyle(
+                                    fontFamily: 'myFont',
+                                    color: themeCtrl.textColor,
+                                    fontSize: 32,
+                                  ),
+                                ),
+                                Text(
+                                  'SEC',
+                                  style: TextStyle(
+                                    fontFamily: 'myFont',
+                                    color: themeCtrl.textColor,
+                                    fontSize: 24,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(
+                              height: 50, // Adjust height to match road image
+                              child: Stack(
+                                children: [
+                                  // Road image (full width)
+                                  Image.asset(
+                                    'assets/images/road.png',
+                                    fit: BoxFit.cover,
+                                  ),
+                                  // Kart image animated horizontally
+                                  AnimatedBuilder(
+                                    animation: _kartAnimationController,
+                                    builder: (context, child) {
+                                      // Calculate horizontal offset (1.0 to 0.0 maps to left-to-right)
+                                      double offsetX =
+                                          _kartAnimationController.value *
+                                              200; // Adjust 200 based on road width
+                                      return Transform.translate(
+                                        offset: Offset(offsetX, 0),
+                                        child: Align(
+                                          alignment: Alignment.centerRight,
+                                          child: Transform.translate(
+                                            offset: Offset(0, -2),
+                                            child: Image.asset(
+                                              'assets/images/kart.png',
+                                              height: 30,
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
                                   ),
                                 ],
                               ),
                             ),
-                          ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -544,30 +389,15 @@ class _QuizScreenState extends State<QuizScreen> with SingleTickerProviderStateM
       return Colors.white;
     }
 
-    if (index == _currentChallenge.questions[_currentQuestionIndex].correctAnswerIndex) {
-      return Colors.green.withOpacity(0.2);
-    }
-
-    if (index == _selectedAnswerIndex) {
-      return Colors.red.withOpacity(0.2);
-    }
-
-    return Colors.white;
-  }
-
-  Color _getOptionBorderColor(int index) {
-    if (!_answerSelected) {
-      return Colors.grey;
-    }
-
-    if (index == _currentChallenge.questions[_currentQuestionIndex].correctAnswerIndex) {
-      return Colors.green;
+    if (index ==
+        _currentChallenge.questions[_currentQuestionIndex].correctAnswerIndex) {
+      return Color(0xff3ab54a);
     }
 
     if (index == _selectedAnswerIndex) {
       return Colors.red;
     }
 
-    return Colors.grey;
+    return Colors.white;
   }
 }

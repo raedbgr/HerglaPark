@@ -3,14 +3,12 @@ import '/imports.dart';
 class Chest {
   String id;
   Location location;
-  String bonusType;
   Timestamp spawnedAt;
   Timestamp expiresAt;
 
   Chest({
     required this.id,
     required this.location,
-    required this.bonusType,
     required this.spawnedAt,
     required this.expiresAt,
   });
@@ -19,7 +17,6 @@ class Chest {
     return {
       'id': id,
       'location': location.toJson(),
-      'bonusType': bonusType,
       'spawnedAt': spawnedAt,
       'expiresAt': expiresAt,
     };
